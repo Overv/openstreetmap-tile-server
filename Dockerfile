@@ -3,6 +3,10 @@ FROM ubuntu:18.04
 # Based on
 # https://switch2osm.org/manually-building-a-tile-server-18-04-lts/
 
+# Set up environment
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Install dependencies
 RUN apt-get update && apt-get install -y \
   apache2 \
@@ -62,9 +66,7 @@ RUN apt-get update && apt-get install -y \
   wget \
   zlib1g-dev
 
-# Set up environment and renderer user
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
 USER renderer
 
