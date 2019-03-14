@@ -98,3 +98,5 @@ RUN apt-get install -y sudo
 COPY run.sh /
 ENTRYPOINT ["/run.sh"]
 CMD []
+
+EXPOSE 80 5432
