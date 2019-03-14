@@ -106,7 +106,6 @@ WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
 RUN npm install -g carto
 USER renderer
-RUN carto -v
 RUN carto project.mml > mapnik.xml
 
 # Load shapefiles
