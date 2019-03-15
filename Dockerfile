@@ -8,7 +8,9 @@ ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
-RUN apt-get update && apt-get install -y \
+RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends --allow-unauthenticated \
   apache2 \
   apache2-dev \
   autoconf \
@@ -18,14 +20,11 @@ RUN apt-get update && apt-get install -y \
   fonts-noto-cjk \
   fonts-noto-hinted \
   fonts-noto-unhinted \
-  g++ \
+  clang \
   gdal-bin \
   git-core \
   libagg-dev \
   libboost-all-dev \
-  libboost-dev \
-  libboost-filesystem-dev \
-  libboost-system-dev \
   libbz2-dev \
   libcairo-dev \
   libcairomm-1.0-dev \
@@ -36,8 +35,7 @@ RUN apt-get update && apt-get install -y \
   libgeos-dev \
   libgeotiff-epsg \
   libicu-dev \
-  liblua5.1-dev \
-  liblua5.2-dev \
+  liblua5.3-dev \
   libmapnik-dev \
   libpq-dev \
   libproj-dev \
@@ -45,16 +43,15 @@ RUN apt-get update && apt-get install -y \
   libtiff5-dev \
   libtool \
   libxml2-dev \
-  lua5.1 \
-  lua5.2 \
+  lua5.3 \
   make \
   mapnik-utils \
   nodejs \
   npm \
   postgis \
-  postgresql \
+  postgresql-10 \
   postgresql-10-postgis-2.4 \
-  postgresql-contrib \
+  postgresql-contrib-10 \
   protobuf-c-compiler \
   python-mapnik \
   sudo \
@@ -62,11 +59,16 @@ RUN apt-get update && apt-get install -y \
   ttf-unifont \
   unzip \
   wget \
-  zlib1g-dev
+  zlib1g-dev \
+&& apt-get clean autoclean \
+&& apt-get autoremove --yes \
+&& rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
 USER renderer
+
+ENV GIT_SSL_NO_VERIFY=true
 
 # Install latest osm2pgsql
 RUN mkdir /home/renderer/src
@@ -75,8 +77,8 @@ RUN git clone https://github.com/openstreetmap/osm2pgsql.git
 WORKDIR /home/renderer/src/osm2pgsql
 RUN mkdir build
 WORKDIR /home/renderer/src/osm2pgsql/build
-RUN cmake ..
-RUN make
+RUN cmake .. \
+  && make -j $(nproc)
 USER root
 RUN make install
 USER renderer
@@ -88,13 +90,13 @@ RUN python -c 'import mapnik'
 WORKDIR /home/renderer/src
 RUN git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git
 WORKDIR /home/renderer/src/mod_tile
-RUN ./autogen.sh
-RUN ./configure
-RUN make
+RUN ./autogen.sh \
+  && ./configure \
+  && make -j $(nproc)
 USER root
-RUN make install
-RUN make install-mod_tile
-RUN ldconfig
+RUN make -j $(nproc) install \
+  && make -j $(nproc) install-mod_tile \
+  && ldconfig
 USER renderer
 
 # Configure stylesheet
@@ -102,28 +104,30 @@ WORKDIR /home/renderer/src
 RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
-RUN npm install -g carto
+RUN npm config set strict-ssl=false \
+  && npm install -g carto
 USER renderer
 RUN carto project.mml > mapnik.xml
 
 # Load shapefiles
 WORKDIR /home/renderer/src/openstreetmap-carto
+ENV PYTHONHTTPSVERIFY=0
 RUN scripts/get-shapefiles.py
 
 # Configure renderd
 USER root
-RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf
-RUN sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
 USER renderer
 
 # Configure Apache
 USER root
-RUN mkdir /var/lib/mod_tile
-RUN chown renderer /var/lib/mod_tile
-RUN mkdir /var/run/renderd
-RUN chown renderer /var/run/renderd
-RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf
-RUN a2enconf mod_tile
+RUN mkdir /var/lib/mod_tile \
+  && chown renderer /var/lib/mod_tile \
+  && mkdir /var/run/renderd \
+  && chown renderer /var/run/renderd
+RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
+  && a2enconf mod_tile
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
 
