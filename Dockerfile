@@ -134,7 +134,10 @@ RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
   && ln -sf /proc/1/fd/2 /var/log/apache2/error.log
 
 # Configure PosgtreSQL
-RUN chown -R postgres:postgres /var/lib/postgresql
+COPY postgresql.custom.conf /etc/postgresql/10/main/
+RUN chown -R postgres:postgres /var/lib/postgresql \
+  && chown postgres:postgres /etc/postgresql/10/main/postgresql.custom.conf \
+  && echo "\ninclude 'postgresql.custom.conf'" >> /etc/postgresql/10/main/postgresql.conf
 
 # Start running
 COPY run.sh /
