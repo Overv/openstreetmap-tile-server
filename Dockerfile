@@ -130,7 +130,7 @@ RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/a
   && a2enconf mod_tile
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
-RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log
+RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
   && ln -sf /proc/1/fd/2 /var/log/apache2/error.log
 
 # Start running
