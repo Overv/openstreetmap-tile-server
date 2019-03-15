@@ -133,6 +133,9 @@ COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
   && ln -sf /proc/1/fd/2 /var/log/apache2/error.log
 
+# Configure PosgtreSQL
+RUN chown -R postgres:postgres /var/lib/postgresql
+
 # Start running
 COPY run.sh /
 ENTRYPOINT ["/run.sh"]
