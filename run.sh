@@ -12,11 +12,8 @@ fi
 
 if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
+    sudo -u postgres echo "autovacuum = off" >> /etc/postgresql/10/main/postgresql.custom.conf
     service postgresql start
-    sudo -u postgres createuser renderer
-    sudo -u postgres createdb -E UTF8 -O renderer gis
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
     sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
 
