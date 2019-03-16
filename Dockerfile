@@ -50,7 +50,8 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   npm \
   postgis \
   postgresql-10 \
-  postgresql-10-postgis-2.4 \
+  postgresql-10-postgis-2.5 \
+  postgresql-10-postgis-2.5-scripts \
   postgresql-contrib-10 \
   protobuf-c-compiler \
   python-mapnik \
