@@ -10,6 +10,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Install dependencies
 RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
+  && apt-get install -y apt-transport-https ca-certificates \
   && apt-get install -y --no-install-recommends --allow-unauthenticated \
   apache2 \
   apache2-dev \
@@ -69,8 +70,6 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
 RUN adduser --disabled-password --gecos "" renderer
 USER renderer
 
-ENV GIT_SSL_NO_VERIFY=true
-
 # Install latest osm2pgsql
 RUN mkdir /home/renderer/src
 WORKDIR /home/renderer/src
@@ -105,14 +104,12 @@ WORKDIR /home/renderer/src
 RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
-RUN npm config set strict-ssl=false \
-  && npm install -g carto
+RUN npm install -g carto
 USER renderer
 RUN carto project.mml > mapnik.xml
 
 # Load shapefiles
 WORKDIR /home/renderer/src/openstreetmap-carto
-ENV PYTHONHTTPSVERIFY=0
 RUN scripts/get-shapefiles.py
 
 # Configure renderd
