@@ -35,6 +35,21 @@ The import and tile serving processes use 4 threads by default, but this number 
 
     docker run -p 80:80 -e THREADS=24 -v openstreetmap-data:/var/lib/postgresql/10/main -d overv/openstreetmap-tile-server run
 
+## Troubleshooting
+
+### ERROR: could not resize shared memory segment
+
+If you encounter such entries in the log, it will mean that the default shared memory limit (64 MB) is too low for the container and it should be raised:
+
+    renderd[126]: ERROR: failed to render TILE ajt 6 32-39 16-23,
+    renderd[126]: reason: Postgis Plugin: ERROR: could not resize shared memory segment
+
+To raise it use `--shm-size` parameter. For example:
+
+    docker run -p 80:80 -v openstreetmap-data:/var/lib/postgresql/10/main --shm-size="192m" -d overv/openstreetmap-tile-server run
+
+For too high values you may notice excessive CPU load and memory usage. It might be that you will have to experimentally find the best values for yourself.
+
 ## License
 
 ```
