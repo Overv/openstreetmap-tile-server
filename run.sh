@@ -1,5 +1,14 @@
 #!/bin/bash
 
+set -x
+
+function CreatePostgressqlConfig()
+{
+  cp /etc/postgresql/10/main/postgresql.custom.conf.tmpl /etc/postgresql/10/main/postgresql.custom.conf
+  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/10/main/postgresql.custom.conf
+  cat /etc/postgresql/10/main/postgresql.custom.conf
+}
+
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
@@ -12,6 +21,7 @@ fi
 
 if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
+    CreatePostgressqlConfig
     service postgresql start
     sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
@@ -35,6 +45,7 @@ fi
 
 if [ "$1" = "run" ]; then
     # Initialize PostgreSQL and Apache
+    CreatePostgressqlConfig
     service postgresql start
     service apache2 restart
 

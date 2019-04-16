@@ -5,6 +5,7 @@ FROM ubuntu:18.04
 
 # Set up environment
 ENV TZ=UTC
+ENV AUTOVACUUM=on
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
@@ -135,9 +136,9 @@ RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
   && ln -sf /proc/1/fd/2 /var/log/apache2/error.log
 
 # Configure PosgtreSQL
-COPY postgresql.custom.conf /etc/postgresql/10/main/
+COPY postgresql.custom.conf.tmpl /etc/postgresql/10/main/
 RUN chown -R postgres:postgres /var/lib/postgresql \
-  && chown postgres:postgres /etc/postgresql/10/main/postgresql.custom.conf \
+  && chown postgres:postgres /etc/postgresql/10/main/postgresql.custom.conf.tmpl \
   && echo "\ninclude 'postgresql.custom.conf'" >> /etc/postgresql/10/main/postgresql.conf
 
 # Start running
