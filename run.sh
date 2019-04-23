@@ -12,6 +12,7 @@ fi
 
 if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
+    sudo -u postgres echo "autovacuum = off" >> /etc/postgresql/10/main/postgresql.custom.conf
     service postgresql start
     sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
@@ -28,6 +29,7 @@ if [ "$1" = "import" ]; then
 
     # Import data
     sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
+    service postgresql stop
 
     exit 0
 fi
@@ -42,6 +44,7 @@ if [ "$1" = "run" ]; then
 
     # Run
     sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf
+    service postgresql stop
 
     exit 0
 fi
