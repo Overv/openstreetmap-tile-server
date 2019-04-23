@@ -20,7 +20,7 @@ Run the server like this:
 
     docker run -p 80:80 -v openstreetmap-data:/var/lib/postgresql/10/main -d overv/openstreetmap-tile-server run
 
-Your tiles will now be available at http://localhost:80/tile/{z}/{x}/{y}.png. If you open `leaflet-demo.html` in your browser, you should be able to see the tiles served by your own machine. Note that it will initially quite a bit of time to render the larger tiles for the first time.
+Your tiles will now be available at `http://localhost:80/tile/{z}/{x}/{y}.png`. The demo map in `leaflet-demo.html` will then be available on `http://localhost:80`. Note that it will initially quite a bit of time to render the larger tiles for the first time.
 
 ## Preserving rendered tiles
 
@@ -61,7 +61,7 @@ For too high values you may notice excessive CPU load and memory usage. It might
 ## License
 
 ```
-Copyright 2018 Alexander Overvoorde
+Copyright 2019 Alexander Overvoorde
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
