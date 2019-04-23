@@ -43,6 +43,10 @@ The database use the autovacuum feature by default. This behavior can be changed
 
     docker run -p 80:80 -e AUTOVACUUM=off -v openstreetmap-data:/var/lib/postgresql/10/main -d overv/openstreetmap-tile-server
 
+## Benchmarks
+
+You can find an example of the import performance to expect with this image on the [OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Osm2pgsql/benchmarks#debian_9_.2F_openstreetmap-tile-server).
+
 ## Troubleshooting
 
 ### ERROR: could not resize shared memory segment
