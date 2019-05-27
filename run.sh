@@ -38,7 +38,6 @@ EOSU
     fi
     # Import data
     sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
-    service postgresql stop
     # Create indexes
     su postgres << EOSU
     psql -d gis -c "CREATE INDEX planet_osm_roads_admin ON planet_osm_roads USING GIST (way)
@@ -69,6 +68,8 @@ EOSU
     psql -d gis -c "CREATE INDEX planet_osm_point_place ON planet_osm_point USING GIST (way)
       WHERE place IS NOT NULL AND name IS NOT NULL;"
 EOSU
+    # Stop postgres
+    service postgresql stop
     exit 0
 fi
 
