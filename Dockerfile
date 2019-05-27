@@ -2,9 +2,14 @@ FROM ubuntu:18.04
 
 # Based on
 # https://switch2osm.org/manually-building-a-tile-server-18-04-lts/
-
+LABEL maintainer="kosar@freedom.valor.ua"
+LABEL baseImage="overv/openstreetmap-tile-server"
+LABEL vendor="1node"
+LABEL created="27-05-2019"
+LABEL lastUpdate="27-05-2019"
+LABEL description="OSM-tile-server container based on UBUNTU 18.04"
 # Set up environment
-ENV TZ=UTC
+ENV TZ=Europe/Kiev
 ENV AUTOVACUUM=on
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -12,60 +17,19 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && apt-get install -y apt-transport-https ca-certificates \
-  && apt-get install -y --no-install-recommends --allow-unauthenticated \
-  apache2 \
-  apache2-dev \
-  autoconf \
-  build-essential \
-  bzip2 \
-  cmake \
-  fonts-noto-cjk \
-  fonts-noto-hinted \
-  fonts-noto-unhinted \
-  clang \
-  gdal-bin \
-  git-core \
-  libagg-dev \
-  libboost-all-dev \
-  libbz2-dev \
-  libcairo-dev \
-  libcairomm-1.0-dev \
-  libexpat1-dev \
-  libfreetype6-dev \
-  libgdal-dev \
-  libgeos++-dev \
-  libgeos-dev \
-  libgeotiff-epsg \
-  libicu-dev \
-  liblua5.3-dev \
-  libmapnik-dev \
-  libpq-dev \
-  libproj-dev \
-  libprotobuf-c0-dev \
-  libtiff5-dev \
-  libtool \
-  libxml2-dev \
-  lua5.3 \
-  make \
-  mapnik-utils \
-  nodejs \
-  npm \
-  postgis \
-  postgresql-10 \
-  postgresql-10-postgis-2.5 \
-  postgresql-10-postgis-2.5-scripts \
-  postgresql-contrib-10 \
-  protobuf-c-compiler \
-  python-mapnik \
-  sudo \
-  tar \
-  ttf-unifont \
-  unzip \
-  wget \
-  zlib1g-dev \
-&& apt-get clean autoclean \
-&& apt-get autoremove --yes \
-&& rm -rf /var/lib/{apt,dpkg,cache,log}/
+  && apt-get install -y --no-install-recommends --allow-unauthenticated apache2 \
+  apache2-dev autoconf build-essential bzip2 cmake fonts-noto-cjk \
+  fonts-noto-hinted fonts-noto-unhinted clang gdal-bin git-core libagg-dev \
+  libboost-all-dev libbz2-dev libcairo-dev libcairomm-1.0-dev libexpat1-dev \
+  libfreetype6-dev libgdal-dev libgeos++-dev libgeos-dev libgeotiff-epsg \
+  libicu-dev liblua5.3-dev libmapnik-dev libpq-dev libproj-dev libprotobuf-c0-dev \
+  libtiff5-dev libtool libxml2-dev lua5.3 make mapnik-utils nodejs npm \
+  postgis postgresql-10 postgresql-10-postgis-2.5 postgresql-10-postgis-2.5-scripts \
+  postgresql-contrib-10 protobuf-c-compiler python-mapnik sudo tar \
+  ttf-unifont unzip wget zlib1g-dev \
+  && apt-get clean autoclean \
+  && apt-get autoremove --yes \
+  && rm -rf /var/lib/{apt,dpkg,cache,log}
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer

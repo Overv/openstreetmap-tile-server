@@ -23,17 +23,45 @@ if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
     CreatePostgressqlConfig
     service postgresql start
-    sudo -u postgres createuser renderer
-    sudo -u postgres createdb -E UTF8 -O renderer gis
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
-    sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
-    sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
-
+    su postgres << EOSU
+    createuser renderer
+    createdb -E UTF8 -O renderer gis
+    psql -d gis -c "CREATE EXTENSION postgis;"
+    psql -d gis -c "CREATE EXTENSION hstore;"
+    psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
+    psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    psql -d gis -c "CREATE INDEX planet_osm_roads_admin ON planet_osm_roads USING GIST (way)
+      WHERE boundary = 'administrative';"
+    psql -d gis -c "CREATE INDEX planet_osm_roads_roads_ref ON planet_osm_roads USING GIST (way)
+      WHERE highway IS NOT NULL AND ref IS NOT NULL;"
+    psql -d gis -c "CREATE INDEX planet_osm_roads_admin_low ON planet_osm_roads USING GIST (way)
+      WHERE boundary = 'administrative' AND admin_level IN ('0', '1', '2', '3', '4');"
+    psql -d gis -c "CREATE INDEX planet_osm_line_ferry ON planet_osm_line USING GIST (way)
+      WHERE route = 'ferry';"
+    psql -d gis -c "CREATE INDEX planet_osm_line_river ON planet_osm_line USING GIST (way)
+      WHERE waterway = 'river';"
+    psql -d gis -c "CREATE INDEX planet_osm_line_name ON planet_osm_line USING GIST (way)
+      WHERE name IS NOT NULL;"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_water ON planet_osm_polygon USING GIST (way)
+      WHERE waterway IN ('dock', 'riverbank', 'canal') OR landuse IN ('reservoir', 'basin')
+        OR \"natural\" IN ('water', 'glacier');"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_nobuilding ON planet_osm_polygon USING GIST (way)
+      WHERE building IS NULL;"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_name ON planet_osm_polygon USING GIST (way)
+      WHERE name IS NOT NULL;"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_way_area_z10 ON planet_osm_polygon USING GIST (way)
+      WHERE way_area > 23300;"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_military ON planet_osm_polygon USING GIST (way)
+      WHERE (landuse = 'military' OR military = 'danger_area') AND building IS NULL;"
+    psql -d gis -c "CREATE INDEX planet_osm_polygon_way_area_z6 ON planet_osm_polygon USING GIST (way)
+      WHERE way_area > 5980000;"
+    psql -d gis -c "CREATE INDEX planet_osm_point_place ON planet_osm_point USING GIST (way)
+      WHERE place IS NOT NULL AND name IS NOT NULL;"
+EOSU
     # Download Luxembourg as sample if no data is provided
     if [ ! -f /data.osm.pbf ]; then
         echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
-        wget -nv http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf -O /data.osm.pbf
+        wget -nv https://download.geofabrik.de/europe/ukraine-latest.osm.pbf -O /data.osm.pbf
     fi
 
     # Import data
