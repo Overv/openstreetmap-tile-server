@@ -30,6 +30,17 @@ if [ "$1" = "import" ]; then
     psql -d gis -c "CREATE EXTENSION hstore;"
     psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
     psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+EOSU
+    # Download Ukraine map as sample if no data is provided
+    if [ ! -f /data.osm.pbf ]; then
+        echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
+        wget -nv https://download.geofabrik.de/europe/ukraine-latest.osm.pbf -O /data.osm.pbf
+    fi
+    # Import data
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
+    service postgresql stop
+    # Create indexes
+    su postgres << EOSU
     psql -d gis -c "CREATE INDEX planet_osm_roads_admin ON planet_osm_roads USING GIST (way)
       WHERE boundary = 'administrative';"
     psql -d gis -c "CREATE INDEX planet_osm_roads_roads_ref ON planet_osm_roads USING GIST (way)
@@ -58,16 +69,6 @@ if [ "$1" = "import" ]; then
     psql -d gis -c "CREATE INDEX planet_osm_point_place ON planet_osm_point USING GIST (way)
       WHERE place IS NOT NULL AND name IS NOT NULL;"
 EOSU
-    # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data.osm.pbf ]; then
-        echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
-        wget -nv https://download.geofabrik.de/europe/ukraine-latest.osm.pbf -O /data.osm.pbf
-    fi
-
-    # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
-    service postgresql stop
-
     exit 0
 fi
 
