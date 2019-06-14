@@ -140,6 +140,7 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 
 # Start running
 COPY run.sh /
+COPY indexes.sql /
 ENTRYPOINT ["/run.sh"]
 CMD []
 
