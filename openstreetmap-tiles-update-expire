@@ -148,7 +148,7 @@ fi
         m_error "Osmosis error"
     fi
 
-if [ -f TRIM_POLY_FILE ] ; then
+if [ -f $TRIM_POLY_FILE ] ; then
   m_ok "filtering diff"
   /var/lib/mod_tile/data.poly
   if ! $TRIM_BIN $TRIM_OPTIONS $TRIM_REGION_OPTIONS  -z $CHANGE_FILE $CHANGE_FILE 1>&2 2>> "$RUNLOG"; then
