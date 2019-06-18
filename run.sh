@@ -48,6 +48,12 @@ if [ "$1" = "import" ]; then
 fi
 
 if [ "$1" = "run" ]; then
+    # Clean /tmp
+    rm -rf /tmp/*
+    
+    # Fix postgres data privileges
+    chown postgres:postgres /var/lib/postgresql -R
+
     # Initialize PostgreSQL and Apache
     CreatePostgressqlConfig
     service postgresql start
