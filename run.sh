@@ -16,6 +16,7 @@ if [ "$#" -ne 1 ]; then
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
+    echo "    UPDATES: consecutive updates (enabled/disabled)"
     exit 1
 fi
 
@@ -34,6 +35,20 @@ if [ "$1" = "import" ]; then
     if [ ! -f /data.osm.pbf ]; then
         echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
         wget -nv http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf -O /data.osm.pbf
+        wget -nv http://download.geofabrik.de/europe/luxembourg.poly -O /data.poly
+    fi
+
+    # determine and set osmosis_replication_timestamp (for consecutive updates)
+    osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
+    osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
+    REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
+
+    # initial setup of osmosis workspace (for consecutive updates)
+    sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+
+    # copy polygon file if available
+    if [ -f /data.poly ]; then
+        sudo -u renderer cp /data.poly /var/lib/mod_tile/data.poly
     fi
 
     # Import data
@@ -61,6 +76,11 @@ if [ "$1" = "run" ]; then
 
     # Configure renderd threads
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
+
+    # start cron job to trigger consecutive updates
+    if [ "$UPDATES" = "enabled" ]; then
+      /etc/init.d/cron start
+    fi
 
     # Run
     sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf

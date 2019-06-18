@@ -6,6 +6,7 @@ FROM ubuntu:18.04
 # Set up environment
 ENV TZ=UTC
 ENV AUTOVACUUM=on
+ENV UPDATES=disabled
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
@@ -63,6 +64,10 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   unzip \
   wget \
   zlib1g-dev \
+  osmosis \
+  osmium-tool \
+  cron \
+  python-psycopg2 python-shapely python-lxml \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
@@ -138,7 +143,22 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
   && chown postgres:postgres /etc/postgresql/10/main/postgresql.custom.conf.tmpl \
   && echo "\ninclude 'postgresql.custom.conf'" >> /etc/postgresql/10/main/postgresql.conf
 
+# copy update scripts
+COPY openstreetmap-tiles-update-expire /usr/bin/
+RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
+    && mkdir /var/log/tiles \
+    && chmod a+rw /var/log/tiles \
+    && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
+    && echo "*  *    * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
+
+# install trim_osc.py helper script
+USER renderer
+RUN cd ~/src \
+    && git clone https://github.com/zverik/regional \
+    && chmod u+x ~/src/regional/trim_osc.py
+
 # Start running
+USER root
 COPY run.sh /
 COPY indexes.sql /
 ENTRYPOINT ["/run.sh"]
