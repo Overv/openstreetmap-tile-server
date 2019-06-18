@@ -48,6 +48,9 @@ if [ "$1" = "import" ]; then
 fi
 
 if [ "$1" = "run" ]; then
+    # Clean /tmp
+    rm -rf /tmp/*
+
     # Initialize PostgreSQL and Apache
     CreatePostgressqlConfig
     service postgresql start
