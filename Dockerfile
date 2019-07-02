@@ -67,7 +67,7 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   osmosis \
   osmium-tool \
   cron \
-  python-psycopg2 python-shapely python-lxml \
+  python3-psycopg2 python3-shapely python3-lxml \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
