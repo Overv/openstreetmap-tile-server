@@ -125,7 +125,7 @@ docker run \
     -v openstreetmap-data:/var/lib/postgresql/10/main \
     --shm-size="192m" \
     -d overv/openstreetmap-tile-server \
-    run \
+    run
 ```
 For too high values you may notice excessive CPU load and memory usage. It might be that you will have to experimentally find the best values for yourself.
 
