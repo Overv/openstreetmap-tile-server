@@ -70,10 +70,10 @@ Given that you've specified both the OSM data and polygon as specified in the *A
 ```
 docker run \
     -p 80:80 \
+    -e UPDATES=enabled \
     -v openstreetmap-data:/var/lib/postgresql/10/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     -d overv/openstreetmap-tile-server \
-    -e UPDATES=enabled \
     run
 ```
 
