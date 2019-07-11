@@ -28,7 +28,7 @@ If your import is an extract of the planet and has polygonal bounds associated w
 docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
-    -v /openstreetmap-data:/var/lib/postgresql/10/main \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
     overv/openstreetmap-tile-server \
     import
 ```
