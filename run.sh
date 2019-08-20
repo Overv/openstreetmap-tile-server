@@ -52,7 +52,7 @@ if [ "$1" = "import" ]; then
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua -C 2048 --number-processes ${THREADS:-4} ${OSM2PGSQL_EXTRA_ARGS} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf
 
     # Create indexes
     sudo -u postgres psql -d gis -f indexes.sql
@@ -65,7 +65,7 @@ fi
 if [ "$1" = "run" ]; then
     # Clean /tmp
     rm -rf /tmp/*
-    
+
     # Fix postgres data privileges
     chown postgres:postgres /var/lib/postgresql -R
 

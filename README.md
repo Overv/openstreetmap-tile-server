@@ -94,6 +94,7 @@ docker run \
     -d overv/openstreetmap-tile-server \
     run
 ```
+
 ### AUTOVACUUM
 
 The database use the autovacuum feature by default. This behavior can be changed with `AUTOVACUUM` environment variable. For example:
@@ -105,6 +106,20 @@ docker run \
     -d overv/openstreetmap-tile-server \
     run
 ```
+
+### Flat nodes
+
+If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql as follows:
+
+```
+docker run \
+    -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -e OSM2PGSQL_EXTRA_ARGS=--flat-nodes \
+    overv/openstreetmap-tile-server \
+    import
+```
+
 ### Benchmarks
 
 You can find an example of the import performance to expect with this image on the [OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Osm2pgsql/benchmarks#debian_9_.2F_openstreetmap-tile-server).
@@ -128,6 +143,10 @@ docker run \
     run
 ```
 For too high values you may notice excessive CPU load and memory usage. It might be that you will have to experimentally find the best values for yourself.
+
+### The import process unexpectedly exits
+
+You may be running into problems with memory usage during the import. Have a look at the "Flat nodes" section in this README.
 
 ## License
 
