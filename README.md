@@ -109,13 +109,22 @@ docker run \
 
 ### Flat nodes
 
-If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql as follows:
+If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql. This option takes a path to a file that must be persisted so we should first set up a volume with the right permissions:
+
+```
+docker run -it -v openstreetmap-nodes:/nodes --entrypoint=bash overv/openstreetmap-tile-server
+$ chown renderer:renderer -R /nodes
+$ exit
+```
+
+You can then use it during the import process as follows:
 
 ```
 docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
+    -v openstreetmap-nodes:/nodes \
     -v openstreetmap-data:/var/lib/postgresql/10/main \
-    -e OSM2PGSQL_EXTRA_ARGS=--flat-nodes \
+    -e "OSM2PGSQL_EXTRA_ARGS=--flat-nodes /nodes/flat_nodes.bin" \
     overv/openstreetmap-tile-server \
     import
 ```
