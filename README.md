@@ -79,6 +79,19 @@ docker run \
 
 This will enable a background process that automatically downloads changes from the OpenStreetMap server, filters them for the relevant region polygon you specified, updates the database and finally marks the affected tiles for rerendering.
 
+### Cross-origin resource sharing
+
+To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles from other domains, simply set the `ALLOW_CORS` variable to `1`:
+
+```
+docker run \
+    -p 80:80 \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -e ALLOW_CORS=1 \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
 ## Performance tuning and tweaking
 
 Details for update procedure and invoked scripts can be found here [link](https://ircama.github.io/osm-carto-tutorials/updating-data/).

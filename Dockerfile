@@ -131,7 +131,8 @@ RUN mkdir /var/lib/mod_tile \
   && mkdir /var/run/renderd \
   && chown renderer /var/run/renderd
 RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
-  && a2enconf mod_tile
+    && echo "LoadModule headers_module /usr/lib/apache2/modules/mod_headers.so" >> /etc/apache2/conf-available/mod_headers.conf \
+  && a2enconf mod_tile && a2enconf mod_headers
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
