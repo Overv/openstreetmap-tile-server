@@ -135,8 +135,8 @@ RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/a
   && a2enconf mod_tile && a2enconf mod_headers
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
-RUN ln -sf /proc/1/fd/1 /var/log/apache2/access.log \
-  && ln -sf /proc/1/fd/2 /var/log/apache2/error.log
+RUN ln -sf /dev/stdout /var/log/apache2/access.log \
+  && ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Configure PosgtreSQL
 COPY postgresql.custom.conf.tmpl /etc/postgresql/10/main/
