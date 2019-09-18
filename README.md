@@ -108,6 +108,18 @@ docker run \
     run
 ```
 
+### CACHE
+
+The import and tile serving processes use 800 MB RAM cache by default, but this number can be changed by option -C. For example:
+```
+docker run \
+    -p 80:80 \
+    -e "OSM2PGSQL_EXTRA_ARGS=-C 4096" \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
 ### AUTOVACUUM
 
 The database use the autovacuum feature by default. This behavior can be changed with `AUTOVACUUM` environment variable. For example:
