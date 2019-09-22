@@ -92,6 +92,37 @@ docker run \
     run
 ```
 
+### Connecting to Postgres
+
+To connect to the PostgreSQL database inside the container, make sure to expose port 5432:
+
+```
+docker run \
+    -p 80:80 \
+    -p 5432:5432 \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
+Use the user `renderer` and the database `gis` to connect.
+
+```
+psql -h localhost -U renderer gis
+```
+
+The default password is `renderer`, but it can be changed using the `PGPASSWORD` environment variable:
+
+```
+docker run \
+    -p 80:80 \
+    -p 5432:5432 \
+    -e PGPASSWORD=secret \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
 ## Performance tuning and tweaking
 
 Details for update procedure and invoked scripts can be found here [link](https://ircama.github.io/osm-carto-tutorials/updating-data/).

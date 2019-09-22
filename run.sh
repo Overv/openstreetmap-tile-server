@@ -2,11 +2,14 @@
 
 set -x
 
-function CreatePostgressqlConfig()
-{
+function createPostgresConfig() {
   cp /etc/postgresql/10/main/postgresql.custom.conf.tmpl /etc/postgresql/10/main/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/10/main/postgresql.custom.conf
   cat /etc/postgresql/10/main/postgresql.custom.conf
+}
+
+function setPostgresPassword() {
+    sudo -u postgres psql -c "ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
 }
 
 if [ "$#" -ne 1 ]; then
@@ -22,7 +25,7 @@ fi
 
 if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
-    CreatePostgressqlConfig
+    createPostgresConfig
     service postgresql start
     sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
@@ -30,6 +33,7 @@ if [ "$1" = "import" ]; then
     sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
     sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
     if [ ! -f /data.osm.pbf ]; then
@@ -75,9 +79,10 @@ if [ "$1" = "run" ]; then
     fi
 
     # Initialize PostgreSQL and Apache
-    CreatePostgressqlConfig
+    createPostgresConfig
     service postgresql start
     service apache2 restart
+    setPostgresPassword
 
     # Configure renderd threads
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
