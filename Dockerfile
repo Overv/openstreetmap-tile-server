@@ -87,6 +87,8 @@ RUN cmake .. \
   && make -j $(nproc)
 USER root
 RUN make install
+RUN mkdir /nodes \
+    && chown renderer:renderer /nodes
 USER renderer
 
 # Install and test Mapnik
