@@ -165,15 +165,7 @@ docker run \
 
 ### Flat nodes
 
-If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql. This option takes a path to a file that must be persisted so we should first set up a volume with the right permissions:
-
-```
-docker run -it -v openstreetmap-nodes:/nodes --entrypoint=bash overv/openstreetmap-tile-server
-$ chown renderer:renderer -R /nodes
-$ exit
-```
-
-You can then use it during the import process as follows:
+If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql. You can then use it during the import process as follows:
 
 ```
 docker run \
@@ -184,6 +176,8 @@ docker run \
     overv/openstreetmap-tile-server \
     import
 ```
+
+>Note that if you use a folder other than `/nodes` then you must make sure that you manually set the owner to `renderer`!
 
 ### Benchmarks
 
