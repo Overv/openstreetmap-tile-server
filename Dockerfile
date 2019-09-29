@@ -112,7 +112,7 @@ WORKDIR /home/renderer/src
 RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
-RUN npm install -g carto
+RUN npm install -g carto@0.18.2
 USER renderer
 RUN carto project.mml > mapnik.xml
 
