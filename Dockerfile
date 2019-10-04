@@ -109,7 +109,8 @@ USER renderer
 
 # Configure stylesheet
 WORKDIR /home/renderer/src
-RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git
+RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git \
+ && git -C openstreetmap-carto checkout v4.23.0
 WORKDIR /home/renderer/src/openstreetmap-carto
 USER root
 RUN npm install -g carto@0.18.2
