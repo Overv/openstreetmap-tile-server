@@ -123,6 +123,19 @@ docker run \
     run
 ```
 
+### Tirex
+Tirex is an enhanced tile render daemon implementation and can be used instead of renderd which comes from mod_tile project.
+To enable the `Tirex` simply set the `RENDERERAPP` variable to `tirex`:
+
+```
+docker run \
+    -e RENDERERAPP=tirex \
+    -p 80:80 \
+    -v openstreetmap-data:/var/lib/postgresql/10/main \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
 ## Performance tuning and tweaking
 
 Details for update procedure and invoked scripts can be found here [link](https://ircama.github.io/osm-carto-tutorials/updating-data/).
