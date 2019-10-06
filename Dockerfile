@@ -7,6 +7,7 @@ FROM ubuntu:18.04
 ENV TZ=UTC
 ENV AUTOVACUUM=on
 ENV UPDATES=disabled
+ENV RENDERERAPP=renderd
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
@@ -68,9 +69,11 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   osmium-tool \
   cron \
   python3-psycopg2 python3-shapely python3-lxml \
+  libipc-sharelite-perl libjson-perl libgd-gd2-perl libwww-perl devscripts \
+  nano mc psmisc \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
-&& rm -rf /var/lib/{apt,dpkg,cache,log}/
+&& rm -rf /var/lib/{apt,dpkg,cache,log}
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
@@ -164,6 +167,41 @@ RUN cd ~/src \
     && cd regional \
     && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
     && chmod u+x ~/src/regional/trim_osc.py
+
+# clone, build and install tirex
+# according to fpllowing wiki article:
+#   https://wiki.openstreetmap.org/wiki/Tirex/Building_and_Installing
+USER renderer
+WORKDIR /home/renderer/src
+RUN git clone https://github.com/openstreetmap/tirex.git \
+ && git -C tirex checkout v0.6.1
+WORKDIR /home/renderer/src/tirex
+RUN make
+
+USER root
+RUN make install
+RUN  mkdir /var/lib/tirex \
+  && mkdir /var/log/tirex \
+  && mkdir /var/run/tirex \
+  && mkdir /var/lib/mod_tile/ajx \
+  && chown renderer:renderer /var/lib/tirex \
+  && chown renderer:renderer /var/run/tirex \
+  && chown renderer:renderer /var/log/tirex \
+  && chown renderer /var/lib/mod_tile/ajx
+
+COPY ajt.conf /etc/tirex/renderer/mapnik/
+COPY mapnik.conf /etc/tirex/renderer/
+COPY tirex.conf /etc/tirex/tirex.conf
+
+RUN ln -s /var/lib/mod_tile  /var/lib/tirex/tiles
+
+# remove not required tirex sample renderer and maps
+RUN  rm -fr /etc/tirex/renderer/openseamap \
+	&& rm -fr /etc/tirex/renderer/wms \
+	&& rm -fr /etc/tirex/renderer/mapserver \
+	&& rm -fr /etc/tirex/renderer/openseamap.conf \
+	&& rm -fr /etc/tirex/renderer/wms.conf \
+	&& rm -fr /etc/tirex/renderer/mapserver.conf
 
 # Start running
 USER root
