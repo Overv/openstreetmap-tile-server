@@ -111,11 +111,15 @@ USER renderer
 WORKDIR /home/renderer/src
 RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git \
  && git -C openstreetmap-carto checkout v4.23.0
-WORKDIR /home/renderer/src/openstreetmap-carto
+
+# Install carto
 USER root
 RUN npm install -g carto@0.18.2
+
+# Make a place to mount the bikemap style
 USER renderer
-RUN carto project.mml > mapnik.xml
+WORKDIR /home/renderer/src
+RUN mkdir bikemap
 
 # Load shapefiles
 WORKDIR /home/renderer/src/openstreetmap-carto
@@ -124,7 +128,8 @@ RUN scripts/get-shapefiles.py
 # Configure renderd
 USER root
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
-  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf \
+  && sed -i 's/openstreetmap-carto/bikemap/g' /usr/local/etc/renderd.conf 
 USER renderer
 
 # Configure Apache
