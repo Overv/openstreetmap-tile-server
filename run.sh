@@ -95,8 +95,16 @@ if [ "$1" = "run" ]; then
       /etc/init.d/cron start
     fi
 
-    # Run
-    sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf
+    # Run while handling docker stop's SIGTERM
+    stop_handler() {
+        kill -TERM "$child"
+    }
+    trap stop_handler SIGTERM
+
+    sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf &
+    child=$!
+    wait "$child"
+
     service postgresql stop
 
     exit 0

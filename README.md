@@ -63,6 +63,8 @@ docker run \
     run
 ```
 
+**If you do this, then make sure to also run the import with the `openstreetmap-rendered-tiles` volume to make sure that caching works properly across updates!**
+
 ### Enabling automatic updating (optional)
 
 Given that you've specified both the OSM data and polygon as specified in the *Automatic updates* section during server setup, you can enable the updating process by setting the variable `UPDATES` to `enabled`:
