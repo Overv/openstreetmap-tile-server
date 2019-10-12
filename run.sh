@@ -61,6 +61,9 @@ if [ "$1" = "import" ]; then
     # Create indexes
     sudo -u postgres psql -d gis -f indexes.sql
 
+    # Register that data has changed for mod_tile caching purposes
+    touch /var/lib/mod_tile/planet-import-complete
+
     service postgresql stop
 
     exit 0
