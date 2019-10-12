@@ -119,7 +119,7 @@ RUN npm install -g carto@0.18.2
 # Make a place to mount the bikemap style
 USER renderer
 WORKDIR /home/renderer/src
-RUN mkdir bikemap
+RUN mkdir bikemap-style
 
 # Load shapefiles
 WORKDIR /home/renderer/src/openstreetmap-carto
@@ -129,7 +129,7 @@ RUN scripts/get-shapefiles.py
 USER root
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
   && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf \
-  && sed -i 's/openstreetmap-carto/bikemap/g' /usr/local/etc/renderd.conf 
+  && sed -i 's/openstreetmap-carto/bikemap-style/g' /usr/local/etc/renderd.conf 
 USER renderer
 
 # Configure Apache

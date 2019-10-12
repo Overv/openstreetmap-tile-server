@@ -88,7 +88,7 @@ if [ "$1" = "run" ]; then
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
 
     # Update the mapnik.xml style file
-    PROJECTDIR=/home/renderer/src/bikemap/
+    PROJECTDIR=/home/renderer/src/bikemap-style/
     /usr/local/bin/carto ${PROJECTDIR}/project.mml > ${PROJECTDIR}/mapnik.xml
 
     # start cron job to trigger consecutive updates
