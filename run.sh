@@ -3,9 +3,9 @@
 set -x
 
 function createPostgresConfig() {
-  cp /etc/postgresql/10/main/postgresql.custom.conf.tmpl /etc/postgresql/10/main/postgresql.custom.conf
-  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/10/main/postgresql.custom.conf
-  cat /etc/postgresql/10/main/postgresql.custom.conf
+  cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/postgresql.custom.conf
+  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/postgresql.custom.conf
+  cat /etc/postgresql/12/main/postgresql.custom.conf
 }
 
 function setPostgresPassword() {

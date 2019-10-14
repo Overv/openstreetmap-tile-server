@@ -10,7 +10,10 @@ ENV UPDATES=disabled
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
-RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" >> /etc/apt/sources.list.d/pgdg.list \
+RUN apt-get update \ 
+  && apt-get install wget gnupg2 lsb-core -y \   
+  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+  && echo "deb [ trusted=yes ] http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && apt-get install -y apt-transport-https ca-certificates \
   && apt-get install -y --no-install-recommends --allow-unauthenticated \
@@ -24,7 +27,9 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   fonts-noto-hinted \
   fonts-noto-unhinted \
   clang \
+  gcc \
   gdal-bin \
+  make \
   git-core \
   libagg-dev \
   libboost-all-dev \
@@ -52,10 +57,9 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   nodejs \
   npm \
   postgis \
-  postgresql-10 \
-  postgresql-10-postgis-2.5 \
-  postgresql-10-postgis-2.5-scripts \
-  postgresql-contrib-10 \
+  postgresql-12 \
+  postgresql-server-dev-12 \
+  postgresql-contrib-12 \
   protobuf-c-compiler \
   python-mapnik \
   sudo \
@@ -71,6 +75,11 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+# Set up PostGIS
+RUN wget http://download.osgeo.org/postgis/source/postgis-3.0.0rc2.tar.gz
+RUN tar -xvzf postgis-3.0.0rc2.tar.gz
+RUN cd postgis-3.0.0rc2 && ./configure && make && make install
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
