@@ -68,6 +68,7 @@ RUN echo "deb [ allow-insecure=yes ] http://apt.postgresql.org/pub/repos/apt/ bi
   osmium-tool \
   cron \
   python3-psycopg2 python3-shapely python3-lxml \
+  python3-geojson python3-flask libapache2-mod-wsgi-py3 \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
