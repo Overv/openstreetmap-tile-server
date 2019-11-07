@@ -42,13 +42,15 @@ if [ "$1" = "import" ]; then
         wget -nv http://download.geofabrik.de/europe/luxembourg.poly -O /data.poly
     fi
 
-    # determine and set osmosis_replication_timestamp (for consecutive updates)
-    osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
-    osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
-    REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
+    if [ "$UPDATES" = "enabled" ]; then
+        # determine and set osmosis_replication_timestamp (for consecutive updates)
+        osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
+        osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
+        REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
-    # initial setup of osmosis workspace (for consecutive updates)
-    sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+        # initial setup of osmosis workspace (for consecutive updates)
+        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+    fi
 
     # copy polygon file if available
     if [ -f /data.poly ]; then

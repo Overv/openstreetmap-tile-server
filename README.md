@@ -22,10 +22,11 @@ If the container exits without errors, then your data has been successfully impo
 
 ### Automatic updates (optional)
 
-If your import is an extract of the planet and has polygonal bounds associated with it, like those from geofabrik.de, then it is possible to set your server up for automatic updates. Make sure to reference both the OSM file and the polygon file during the import process to facilitate this:
+If your import is an extract of the planet and has polygonal bounds associated with it, like those from geofabrik.de, then it is possible to set your server up for automatic updates. Make sure to reference both the OSM file and the polygon file during the import process to facilitate this, and also include the `UPDATES=enabled` variable:
 
 ```
 docker run \
+    -e UPDATES=enabled \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
@@ -33,7 +34,7 @@ docker run \
     import
 ```
 
-Refer to the section *Automatic updating and tile expiry* to actually enable the updates.
+Refer to the section *Automatic updating and tile expiry* to actually enable the updates while running the tile server.
 
 ## Running the server
 
@@ -67,7 +68,7 @@ docker run \
 
 ### Enabling automatic updating (optional)
 
-Given that you've specified both the OSM data and polygon as specified in the *Automatic updates* section during server setup, you can enable the updating process by setting the variable `UPDATES` to `enabled`:
+Given that you've set up your import as described in the *Automatic updates* section during server setup, you can enable the updating process by setting the `UPDATES` variable while running your server as well:
 
 ```
 docker run \
