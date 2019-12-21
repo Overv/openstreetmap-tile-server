@@ -158,11 +158,12 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && echo "*  *    * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
 # install trim_osc.py helper script
-RUN cd ~/src \
+RUN mkdir -p /home/renderer/src \
+ && cd /home/renderer/src \
  && git clone https://github.com/zverik/regional \
  && cd regional \
  && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
- && chmod u+x ~/src/regional/trim_osc.py
+ && chmod u+x /home/renderer/src/regional/trim_osc.py
 
 # Start running
 COPY run.sh /
