@@ -109,16 +109,17 @@ USER renderer
 RUN python -c 'import mapnik'
 
 # Install mod_tile and renderd
-WORKDIR /home/renderer/src
-RUN git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git
-WORKDIR /home/renderer/src/mod_tile
-RUN ./autogen.sh \
-  && ./configure \
-  && make -j $(nproc)
-USER root
-RUN make -j $(nproc) install \
-  && make -j $(nproc) install-mod_tile \
-  && ldconfig
+RUN mkdir -p /home/renderer/src \
+ && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git \
+ && cd mod_tile \
+ && ./autogen.sh \
+ && ./configure \
+ && make -j $(nproc) \
+ && make -j $(nproc) install \
+ && make -j $(nproc) install-mod_tile \
+ && ldconfig \
+ && cd .. \
+ && rm -rf mod_tile
 USER renderer
 
 # Configure stylesheet
