@@ -91,18 +91,18 @@ RUN adduser --disabled-password --gecos "" renderer
 USER renderer
 
 # Install latest osm2pgsql
-RUN mkdir /home/renderer/src
-WORKDIR /home/renderer/src
-RUN git clone https://github.com/openstreetmap/osm2pgsql.git
-WORKDIR /home/renderer/src/osm2pgsql
-RUN mkdir build
-WORKDIR /home/renderer/src/osm2pgsql/build
-RUN cmake .. \
-  && make -j $(nproc)
-USER root
-RUN make install
-RUN mkdir /nodes \
-    && chown renderer:renderer /nodes
+RUN mkdir -p /home/renderer/src \
+ && cd /home/renderer/src \
+ && git clone https://github.com/openstreetmap/osm2pgsql.git \
+ && cd /home/renderer/src/osm2pgsql \
+ && mkdir build \
+ && cd build \
+ && cmake .. \
+ && make -j $(nproc) \
+ && make install \
+ && mkdir /nodes \
+ && chown renderer:renderer /nodes \
+ && rm -rf /home/renderer/src
 USER renderer
 
 # Install and test Mapnik
