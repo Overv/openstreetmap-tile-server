@@ -173,10 +173,10 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
 # install trim_osc.py helper script
 USER renderer
 RUN cd ~/src \
-    && git clone https://github.com/zverik/regional \
-    && cd regional \
-    && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
-    && chmod u+x ~/src/regional/trim_osc.py
+ && git clone https://github.com/zverik/regional \
+ && cd regional \
+ && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
+ && chmod u+x ~/src/regional/trim_osc.py
 
 # Start running
 USER root
