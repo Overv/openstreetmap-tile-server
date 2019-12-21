@@ -88,7 +88,6 @@ RUN wget http://download.osgeo.org/postgis/source/postgis-3.0.0rc2.tar.gz -O pos
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
-USER renderer
 
 # Install latest osm2pgsql
 RUN mkdir -p /home/renderer/src \
@@ -103,10 +102,6 @@ RUN mkdir -p /home/renderer/src \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
  && rm -rf /home/renderer/src
-USER renderer
-
-# Install and test Mapnik
-RUN python -c 'import mapnik'
 
 # Install mod_tile and renderd
 RUN mkdir -p /home/renderer/src \
@@ -120,29 +115,21 @@ RUN mkdir -p /home/renderer/src \
  && ldconfig \
  && cd .. \
  && rm -rf mod_tile
-USER renderer
 
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
  && git clone https://github.com/gravitystorm/openstreetmap-carto.git \
  && git -C openstreetmap-carto checkout v4.23.0 \
- && openstreetmap-carto \
- && npm install -g carto@0.18.2
-USER renderer
-RUN carto project.mml > mapnik.xml
-
-# Load shapefiles
-WORKDIR /home/renderer/src/openstreetmap-carto
-RUN scripts/get-shapefiles.py
+ && cd openstreetmap-carto \
+ && npm install -g carto@0.18.2 \
+ && carto project.mml > mapnik.xml \
+ && scripts/get-shapefiles.py
 
 # Configure renderd
-USER root
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
-  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
-USER renderer
+ && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
 
 # Configure Apache
-USER root
 RUN mkdir /var/lib/mod_tile \
  && chown renderer /var/lib/mod_tile \
  && mkdir /var/run/renderd \
@@ -171,7 +158,6 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && echo "*  *    * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
 # install trim_osc.py helper script
-USER renderer
 RUN cd ~/src \
  && git clone https://github.com/zverik/regional \
  && cd regional \
@@ -179,7 +165,6 @@ RUN cd ~/src \
  && chmod u+x ~/src/regional/trim_osc.py
 
 # Start running
-USER root
 COPY run.sh /
 COPY indexes.sql /
 ENTRYPOINT ["/run.sh"]
