@@ -78,9 +78,13 @@ RUN apt-get update \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Set up PostGIS
-RUN wget http://download.osgeo.org/postgis/source/postgis-3.0.0rc2.tar.gz
-RUN tar -xvzf postgis-3.0.0rc2.tar.gz
-RUN cd postgis-3.0.0rc2 && ./configure && make && make install
+RUN wget http://download.osgeo.org/postgis/source/postgis-3.0.0rc2.tar.gz -O postgis.tar.gz \
+ && mkdir -p postgis_src \
+ && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
+ && rm postgis.tar.gz \
+ && cd postgis_src \
+ && ./configure && make && make install \
+ && cd .. && rm -rf postgis_src
 
 # Set up renderer user
 RUN adduser --disabled-password --gecos "" renderer
