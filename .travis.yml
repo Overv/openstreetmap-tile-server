@@ -1,0 +1,15 @@
+sudo: required
+services:
+- docker
+before_install:
+- echo "Before install"
+before_script:
+- echo "Before script"
+script:
+- docker build -t osm .
+after_script:
+- docker images
+after_success:
+- if [[ "$TRAVIS_BRANCH" == "master" ]]; then echo "One can push to image dockerhub" ; fi
+notifications:
+  email: true
