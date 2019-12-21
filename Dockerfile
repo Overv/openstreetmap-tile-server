@@ -22,14 +22,14 @@ RUN apt-get update \
   autoconf \
   build-essential \
   bzip2 \
+  clang \
   cmake \
+  cron \
   fonts-noto-cjk \
   fonts-noto-hinted \
   fonts-noto-unhinted \
-  clang \
   gcc \
   gdal-bin \
-  make \
   git-core \
   libagg-dev \
   libboost-all-dev \
@@ -56,22 +56,23 @@ RUN apt-get update \
   mapnik-utils \
   nodejs \
   npm \
+  osmium-tool \
+  osmosis \
   postgis \
   postgresql-12 \
-  postgresql-server-dev-12 \
   postgresql-contrib-12 \
+  postgresql-server-dev-12 \
   protobuf-c-compiler \
   python-mapnik \
+  python3-lxml \
+  python3-psycopg2 \
+  python3-shapely \
   sudo \
   tar \
   ttf-unifont \
   unzip \
   wget \
   zlib1g-dev \
-  osmosis \
-  osmium-tool \
-  cron \
-  python3-psycopg2 python3-shapely python3-lxml \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
