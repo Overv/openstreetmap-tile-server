@@ -139,7 +139,7 @@ RUN mkdir /var/lib/mod_tile \
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /dev/stdout /var/log/apache2/access.log \
-  && ln -sf /dev/stderr /var/log/apache2/error.log
+ && ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Configure PosgtreSQL
 COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
@@ -148,7 +148,7 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
  && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
  && echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
 
-# copy update scripts
+# Copy update scripts
 COPY openstreetmap-tiles-update-expire /usr/bin/
 RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && mkdir /var/log/tiles \
@@ -156,12 +156,13 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
  && echo "*  *    * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
-# install trim_osc.py helper script
+# Install trim_osc.py helper script
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
  && git clone https://github.com/zverik/regional \
  && cd regional \
  && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
+ && rm -rf .git \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
 
 # Start running
