@@ -42,13 +42,17 @@ Run the server like this:
 
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
 
-Your tiles will now be available at `http://localhost:80/tile/{z}/{x}/{y}.png`. The demo map in `leaflet-demo.html` will then be available on `http://localhost:80`. Note that it will initially take quite a bit of time to render the larger tiles for the first time.
+Your tiles will now be available at `http://localhost:8080/tile/{z}/{x}/{y}.png`. The demo map in `leaflet-demo.html` will then be available on `http://localhost:8080`. Note that it will initially take quite a bit of time to render the larger tiles for the first time.
+
+### Using Docker Compose
+
+The `docker-compose.yml` file included with this repository shows how the aforementioned command can be used with Docker Compose to run your server.
 
 ### Preserving rendered tiles
 
@@ -57,7 +61,7 @@ Tiles that have already been rendered will be stored in `/var/lib/mod_tile`. To 
 ```
 docker volume create openstreetmap-rendered-tiles
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     -d overv/openstreetmap-tile-server \
@@ -72,7 +76,7 @@ Given that you've set up your import as described in the *Automatic updates* sec
 
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -e UPDATES=enabled \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
@@ -88,7 +92,7 @@ To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles 
 
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -e ALLOW_CORS=1 \
     -d overv/openstreetmap-tile-server \
@@ -101,7 +105,7 @@ To connect to the PostgreSQL database inside the container, make sure to expose 
 
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -p 5432:5432 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -d overv/openstreetmap-tile-server \
@@ -118,7 +122,7 @@ The default password is `renderer`, but it can be changed using the `PGPASSWORD`
 
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -p 5432:5432 \
     -e PGPASSWORD=secret \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
@@ -135,7 +139,7 @@ Details for update procedure and invoked scripts can be found here [link](https:
 The import and tile serving processes use 4 threads by default, but this number can be changed by setting the `THREADS` environment variable. For example:
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -e THREADS=24 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -d overv/openstreetmap-tile-server \
@@ -147,7 +151,7 @@ docker run \
 The import and tile serving processes use 800 MB RAM cache by default, but this number can be changed by option -C. For example:
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -e "OSM2PGSQL_EXTRA_ARGS=-C 4096" \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -d overv/openstreetmap-tile-server \
@@ -159,7 +163,7 @@ docker run \
 The database use the autovacuum feature by default. This behavior can be changed with `AUTOVACUUM` environment variable. For example:
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -e AUTOVACUUM=off \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -d overv/openstreetmap-tile-server \
@@ -198,7 +202,7 @@ renderd[121]: reason: Postgis Plugin: ERROR: could not resize shared memory segm
 To raise it use `--shm-size` parameter. For example:
 ```
 docker run \
-    -p 80:80 \
+    -p 8080:80 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     --shm-size="192m" \
     -d overv/openstreetmap-tile-server \
