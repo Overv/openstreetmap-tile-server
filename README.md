@@ -194,19 +194,24 @@ You can find an example of the import performance to expect with this image on t
 You can edit the style of the map by either replacing or editing /home/renderer/src/openstreetmap-carto/mapnik.xml.
 
 To replace:
- docker cp mapnik.xml /home/renderer/src/openstreetmap-carto/
+```
+docker cp mapnik.xml /home/renderer/src/openstreetmap-carto/
+```
 
 To edit in place:
- docker exec -t -i <name of your container> /bin/bash
+```
+docker exec -t -i <name of your container> /bin/bash
  apt install vi
  vi /home/renderer/src/openstreetmap-carto/mapnik.xml
-    
+```    
 Once edited, save the file, then clear the tile cache:
+``` 
  rm -rf /var/lib/mod_tile/ajt/
-
+```
 exit out of the container and restart the container:
- docker restart <name of your container>
-    
+```
+docker restart <name of your container>
+```    
 The tiles will now be updated with your new style. You'll probably need to clear your browser's cache.
 
 ## Troubleshooting
