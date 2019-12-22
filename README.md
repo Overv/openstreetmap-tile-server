@@ -190,6 +190,25 @@ docker run \
 
 You can find an example of the import performance to expect with this image on the [OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Osm2pgsql/benchmarks#debian_9_.2F_openstreetmap-tile-server).
 
+## Editing Styles
+You can edit the style of the map by either replacing or editing /home/renderer/src/openstreetmap-carto/mapnik.xml.
+
+To replace:
+ docker cp mapnik.xml /home/renderer/src/openstreetmap-carto/
+
+To edit in place:
+ docker exec -t -i <name of your container> /bin/bash
+ apt install vi
+ vi /home/renderer/src/openstreetmap-carto/mapnik.xml
+    
+Once edited, save the file, then clear the tile cache:
+ rm -rf /var/lib/mod_tile/ajt/
+
+exit out of the container and restart the container:
+ docker restart <name of your container>
+    
+The tiles will now be updated with your new style. You'll probably need to clear your browser's cache.
+
 ## Troubleshooting
 
 ### ERROR: could not resize shared memory segment / No space left on device
