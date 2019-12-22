@@ -22,7 +22,6 @@ RUN apt-get update \
   autoconf \
   build-essential \
   bzip2 \
-  clang \
   cmake \
   cron \
   fonts-noto-cjk \
