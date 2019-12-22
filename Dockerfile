@@ -62,7 +62,7 @@ RUN apt-get update \
   postgresql-contrib-12 \
   postgresql-server-dev-12 \
   protobuf-c-compiler \
-  python-mapnik \
+  python3-mapnik \
   python3-lxml \
   python3-psycopg2 \
   python3-shapely \
