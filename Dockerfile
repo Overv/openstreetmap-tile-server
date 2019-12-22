@@ -120,6 +120,7 @@ RUN mkdir -p /home/renderer/src \
  && git clone https://github.com/gravitystorm/openstreetmap-carto.git \
  && git -C openstreetmap-carto checkout v4.23.0 \
  && cd openstreetmap-carto \
+ && rm -rf .git \
  && npm install -g carto@0.18.2 \
  && carto project.mml > mapnik.xml \
  && scripts/get-shapefiles.py
