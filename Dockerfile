@@ -93,6 +93,7 @@ RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
  && git clone https://github.com/openstreetmap/osm2pgsql.git \
  && cd /home/renderer/src/osm2pgsql \
+ && rm -rf .git \
  && mkdir build \
  && cd build \
  && cmake .. \
@@ -100,10 +101,11 @@ RUN mkdir -p /home/renderer/src \
  && make install \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
- && rm -rf /home/renderer/src
+ && rm -rf /home/renderer/src/osm2pgsql/build
 
 # Install mod_tile and renderd
 RUN mkdir -p /home/renderer/src \
+ && cd /home/renderer/src \
  && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git \
  && cd mod_tile \
  && ./autogen.sh \
@@ -117,6 +119,7 @@ RUN mkdir -p /home/renderer/src \
 
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
+ && cd /home/renderer/src \
  && git clone https://github.com/gravitystorm/openstreetmap-carto.git \
  && git -C openstreetmap-carto checkout v4.23.0 \
  && cd openstreetmap-carto \
