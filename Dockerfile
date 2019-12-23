@@ -31,7 +31,8 @@ RUN apt-get update \
   gdal-bin \
   git-core \
   libagg-dev \
-  libboost-all-dev \
+  libboost-filesystem-dev \
+  libboost-system-dev \
   libbz2-dev \
   libcairo-dev \
   libcairomm-1.0-dev \
