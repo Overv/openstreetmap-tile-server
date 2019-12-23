@@ -102,7 +102,7 @@ RUN mkdir -p /home/renderer/src \
  && make install \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
- && rm -rf /home/renderer/src/osm2pgsql/build
+ && rm -rf /home/renderer/src/osm2pgsql
 
 # Install mod_tile and renderd
 RUN mkdir -p /home/renderer/src \
