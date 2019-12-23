@@ -20,7 +20,6 @@ after_script:
 after_success:
 - if [[ "$TRAVIS_BRANCH" == "master" ]];
   then
-  docker tag overv/openstreetmap-tile-server gjacquenot/openstreetmap-tile-server ;
   docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
   docker push gjacquenot/openstreetmap-tile-server ;
   fi
