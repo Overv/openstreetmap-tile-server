@@ -115,8 +115,7 @@ RUN mkdir -p /home/renderer/src \
  && make -j $(nproc) install \
  && make -j $(nproc) install-mod_tile \
  && ldconfig \
- && cd .. \
- && rm -rf mod_tile
+ && cd ..
 
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
