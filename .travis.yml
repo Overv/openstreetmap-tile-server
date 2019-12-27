@@ -1,0 +1,30 @@
+os: linux
+language: minimal
+services:
+- docker
+env:
+  global:
+  - DOCKER_USERNAME=gjacquenot
+  - secure: NvtIgByN0GmaSqNsTWFtAU8hKhtBqkScSkYMzlwImZaPa5aDfDyach/otae6Zp3dgWmlGR90ui5HrA+4V0DUvrdx3gODyycwzqF2CvoYtOPr6DC1SN5+xb1ty3toBKMlAJyXQRvwSO0oMkOvFRutC8HVBU8A6g+pO4+4pjpu4WfNLBBfWX5Gq4lVlOLZ4L5NH4Es+BNpdNNWVjZPkrdbU3UtjQIfV2bmAF9ws8GTSxi9+DfJT7Zmj4o9aZfAyfnZ8bdRdiEXUcn8Ilbk3rJwbxIq6IPfI0MmqKveHzpYjBrhQhEsr5cLdbhRI4zB235L+l/hzQDrld7+lVGWsZs60Pgw1xeFHH63J5kBT4Ibn3KOdMLyfEQqY2W3aODp3eU7Bkj/8J/s6rc+uBohGyJOM9muTL54OSfNDSb8q4M9Y4S9okSysZuuS6ry/sFn2kMasDYVYeOg+A9XscLj1JXGRL8/hImUuhRbWnyob1F+gbpH1lbgWIAtQ97bHWt4xJs+Fps4LdaXeUZNTb+FIXE9RRe+qbbHX4+ExIkrkFg3JUnmaS37J8XZJmVXw3panv2DuGV2ri1u1DCa1/JpPmB6AbQIL1jfC7FmuqgMbRGg/6U2h5kAAga8gbyEZscMA1DyFhsqgIG/k87oqRiUumvJ9+/m+o9/EV+XvDLjgHzGMvA=
+before_install:
+- echo "Before install"
+before_script:
+- docker pull gjacquenot/openstreetmap-tile-server || true
+script:
+- docker build --pull --cache-from gjacquenot/openstreetmap-tile-server --tag gjacquenot/openstreetmap-tile-server .
+- docker volume create openstreetmap-data
+- docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main gjacquenot/openstreetmap-tile-server import
+- docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main -p 80:80 -d gjacquenot/openstreetmap-tile-server run
+- sleep 30
+- make DOCKER_IMAGE=gjacquenot/openstreetmap-tile-server stop
+after_script:
+- docker images
+after_success:
+- if [[ "$TRAVIS_BRANCH" == "master" ]];
+  then
+  docker images ;
+  echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ;
+  docker push gjacquenot/openstreetmap-tile-server ;
+  fi
+notifications:
+  email: true
