@@ -11,7 +11,7 @@ push: build
 test: build
 	docker volume create openstreetmap-data
 	docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main ${DOCKER_IMAGE} import
-	docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main -p 80:80 -d ${DOCKER_IMAGE} run
+	docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main -p 8080:80 -d ${DOCKER_IMAGE} run
 
 stop:
 	docker rm -f `docker ps | grep '${DOCKER_IMAGE}' | awk '{ print $$1 }'` || true
