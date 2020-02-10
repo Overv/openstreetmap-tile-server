@@ -79,7 +79,7 @@ if [ "$1" = "run" ]; then
     chown postgres:postgres /var/lib/postgresql -R
 
     # Configure Apache CORS
-    if [ "$ALLOW_CORS" == "1" ]; then
+    if [ "$ALLOW_CORS" == "enabled" ]; then
         echo "export APACHE_ARGUMENTS='-D ALLOW_CORS'" >> /etc/apache2/envvars
     fi
 
