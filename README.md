@@ -90,13 +90,13 @@ This will enable a background process that automatically downloads changes from 
 
 ### Cross-origin resource sharing
 
-To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles from other domains, simply set the `ALLOW_CORS` variable to `1`:
+To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles from other domains, simply set the `ALLOW_CORS` variable to `enabled`:
 
 ```
 docker run \
     -p 8080:80 \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
-    -e ALLOW_CORS=1 \
+    -e ALLOW_CORS=enabled \
     -d overv/openstreetmap-tile-server \
     run
 ```
