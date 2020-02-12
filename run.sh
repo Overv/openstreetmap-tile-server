@@ -79,7 +79,7 @@ if [ "$1" = "run" ]; then
     chown postgres:postgres /var/lib/postgresql -R
 
     # Configure Apache CORS
-    if [ "$ALLOW_CORS" == "enabled" ]; then
+    if [ "$ALLOW_CORS" == "enabled" ] || [ "$ALLOW_CORS" == "1" ]; then
         echo "export APACHE_ARGUMENTS='-D ALLOW_CORS'" >> /etc/apache2/envvars
     fi
 
@@ -93,7 +93,7 @@ if [ "$1" = "run" ]; then
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
 
     # start cron job to trigger consecutive updates
-    if [ "$UPDATES" = "enabled" ]; then
+    if [ "$UPDATES" = "enabled" ] || [ "$UPDATES" = "1" ]; then
       /etc/init.d/cron start
     fi
 
