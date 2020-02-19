@@ -26,6 +26,10 @@ fi
 if [ "$1" = "import" ]; then
     # Initialize PostgreSQL
     createPostgresConfig
+    if [ ! -f /var/lib/postgresql/12/main/PG_VERSION ]; then
+        echo "Initializing postgres cluster"
+        sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main/ initdb -o "--locale C.UTF-8" || exit 1
+    fi
     service postgresql start
     sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
