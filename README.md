@@ -38,6 +38,19 @@ docker run \
 
 Refer to the section *Automatic updating and tile expiry* to actually enable the updates while running the tile server.
 
+### Letting the container download the file
+
+It is also possible to let the container download files for you rather than mounting them in advance by using the `DOWNLOAD_PBF` and `DOWNLOAD_POLY` parameters:
+
+```
+docker run \
+    -e DOWNLOAD_PBF=http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
+    -e DOWNLOAD_POLY=http://download.geofabrik.de/europe/luxembourg.poly \
+    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    overv/openstreetmap-tile-server \
+    import
+```
+
 ## Running the server
 
 Run the server like this:
