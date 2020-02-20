@@ -42,10 +42,19 @@ if [ "$1" = "import" ]; then
     setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data.osm.pbf ]; then
+    if [ ! -f /data.osm.pbf ] && [ -z "$DL_PBF" ]; then
         echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
-        wget -nv http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf -O /data.osm.pbf
-        wget -nv http://download.geofabrik.de/europe/luxembourg.poly -O /data.poly
+        DL_PBF="http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
+        DL_PBF_POLY="http://download.geofabrik.de/europe/luxembourg.poly"
+    fi
+    
+    if [ -n "$DL_PBF" ]; then
+        echo "INFO: Download PBF file: $DL_PBF"
+        wget -nv "$DL_PBF" -O /data.osm.pbf
+        if [ -n "$DL_PBF_POLY" ]; then
+            echo "INFO: Download PBF-POLY file: $DL_PBF_POLY"
+            wget -nv "$DL_PBF_POLY" -O /data.poly
+        fi
     fi
 
     if [ "$UPDATES" = "enabled" ]; then
