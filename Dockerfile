@@ -135,6 +135,7 @@ RUN mkdir -p /home/renderer/src \
 
 # Configure renderd
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+ && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
 
 # Configure Apache
