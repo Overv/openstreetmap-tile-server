@@ -44,8 +44,8 @@ It is also possible to let the container download files for you rather than moun
 
 ```
 docker run \
-    -e DOWNLOAD_PBF=http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
-    -e DOWNLOAD_POLY=http://download.geofabrik.de/europe/luxembourg.poly \
+    -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
+    -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     overv/openstreetmap-tile-server \
     import
@@ -238,7 +238,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

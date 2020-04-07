@@ -13,7 +13,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update \
   && apt-get install wget gnupg2 lsb-core -y \
   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-  && echo "deb [ trusted=yes ] http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
+  && echo "deb [ trusted=yes ] https://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
   && apt-get install -y apt-transport-https ca-certificates 
 
@@ -21,7 +21,7 @@ RUN apt-get install -y curl \
   && wget --quiet -O - https://deb.nodesource.com/setup_10.x | bash - \
   && apt-get install -y nodejs
 
-RUN apt-get install -y --no-install-recommends --allow-unauthenticated \
+RUN apt-get install -y --no-install-recommends \
   apache2 \
   apache2-dev \
   autoconf \
@@ -82,7 +82,7 @@ RUN apt-get install -y --no-install-recommends --allow-unauthenticated \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Set up PostGIS
-RUN wget http://download.osgeo.org/postgis/source/postgis-3.0.0.tar.gz -O postgis.tar.gz \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.0.0.tar.gz -O postgis.tar.gz \
  && mkdir -p postgis_src \
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
