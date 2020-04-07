@@ -44,8 +44,8 @@ if [ "$1" = "import" ]; then
     # Download Luxembourg as sample if no data is provided
     if [ ! -f /data.osm.pbf ] && [ -z "$DOWNLOAD_PBF" ]; then
         echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
-        DOWNLOAD_PBF="http://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
-        DOWNLOAD_POLY="http://download.geofabrik.de/europe/luxembourg.poly"
+        DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
+        DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
     fi
 
     if [ -n "$DOWNLOAD_PBF" ]; then
