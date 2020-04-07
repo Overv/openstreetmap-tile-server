@@ -21,7 +21,7 @@ RUN apt-get install -y curl \
   && wget --quiet -O - https://deb.nodesource.com/setup_10.x | bash - \
   && apt-get install -y nodejs
 
-RUN apt-get install -y --no-install-recommends --allow-unauthenticated \
+RUN apt-get install -y --no-install-recommends \
   apache2 \
   apache2-dev \
   autoconf \
