@@ -98,7 +98,6 @@ RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
  && git clone https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
  && cd /home/renderer/src/osm2pgsql \
- && git fetch --unshallow \
  && rm -rf .git \
  && mkdir build \
  && cd build \
@@ -125,7 +124,7 @@ RUN mkdir -p /home/renderer/src \
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
-  && git clone https://github.com/gravitystorm/openstreetmap-carto.git \
+ && git clone https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && git -C openstreetmap-carto checkout v4.23.0 \
  && cd openstreetmap-carto \
  && rm -rf .git \
