@@ -15,7 +15,7 @@ RUN apt-get update \
   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
   && echo "deb [ trusted=yes ] https://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
-  && apt-get install -y apt-transport-https ca-certificates 
+  && apt-get install -y apt-transport-https ca-certificates
 
 RUN apt-get install -y curl \
   && wget --quiet -O - https://deb.nodesource.com/setup_10.x | bash - \
@@ -96,7 +96,7 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install latest osm2pgsql
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone https://github.com/openstreetmap/osm2pgsql.git \
+ && git clone https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
  && cd /home/renderer/src/osm2pgsql \
  && rm -rf .git \
  && mkdir build \
@@ -124,8 +124,7 @@ RUN mkdir -p /home/renderer/src \
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone https://github.com/gravitystorm/openstreetmap-carto.git \
- && git -C openstreetmap-carto checkout v4.23.0 \
+ && git clone --single-branch --branch v4.23.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
  && rm -rf .git \
  && npm install -g carto@0.18.2 \
