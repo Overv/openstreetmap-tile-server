@@ -87,7 +87,9 @@ RUN wget https://download.osgeo.org/postgis/source/postgis-3.0.0.tar.gz -O postg
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
  && cd postgis_src \
- && ./configure && make && make install \
+ && ./configure \
+ && make -j $(nproc) \
+ && make -j $(nproc) install \
  && cd .. && rm -rf postgis_src
 
 # Set up renderer user
@@ -103,7 +105,7 @@ RUN mkdir -p /home/renderer/src \
  && cd build \
  && cmake .. \
  && make -j $(nproc) \
- && make install \
+ && make -j $(nproc) install \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
  && rm -rf /home/renderer/src/osm2pgsql
