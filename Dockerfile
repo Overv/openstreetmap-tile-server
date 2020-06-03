@@ -11,14 +11,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
 RUN apt-get update \
-  && apt-get install wget gnupg2 lsb-core -y \
+  && apt-get install -y wget gnupg2 lsb-core apt-transport-https ca-certificates curl \
   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
   && echo "deb [ trusted=yes ] https://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
-  && apt-get update \
-  && apt-get install -y apt-transport-https ca-certificates
-
-RUN apt-get install -y curl \
   && wget --quiet -O - https://deb.nodesource.com/setup_10.x | bash - \
+  && apt-get update \
   && apt-get install -y nodejs
 
 RUN apt-get install -y --no-install-recommends \
@@ -87,7 +84,9 @@ RUN wget https://download.osgeo.org/postgis/source/postgis-3.0.0.tar.gz -O postg
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
  && cd postgis_src \
- && ./configure && make && make install \
+ && ./configure \
+ && make -j $(nproc) \
+ && make -j $(nproc) install \
  && cd .. && rm -rf postgis_src
 
 # Set up renderer user
@@ -96,14 +95,14 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install latest osm2pgsql
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
+ && git clone -b master https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
  && cd /home/renderer/src/osm2pgsql \
  && rm -rf .git \
  && mkdir build \
  && cd build \
  && cmake .. \
  && make -j $(nproc) \
- && make install \
+ && make -j $(nproc) install \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
  && rm -rf /home/renderer/src/osm2pgsql
@@ -111,8 +110,9 @@ RUN mkdir -p /home/renderer/src \
 # Install mod_tile and renderd
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git \
+ && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
  && cd mod_tile \
+ && rm -rf .git \
  && ./autogen.sh \
  && ./configure \
  && make -j $(nproc) \
