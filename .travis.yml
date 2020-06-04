@@ -22,7 +22,7 @@ after_success:
   then
   docker images ;
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ;
-  docker push overv/openstreetmap-tile-server ;
+  docker push fsievers/openstreetmap-tile-server ;
   fi
 notifications:
   email: true
