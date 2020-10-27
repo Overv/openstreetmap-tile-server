@@ -50,10 +50,10 @@ if [ "$1" = "import" ]; then
 
     if [ -n "$DOWNLOAD_PBF" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget -nv "$DOWNLOAD_PBF" -O /data.osm.pbf
+        wget "$WGET_ARGS" "$DOWNLOAD_PBF" -O /data.osm.pbf
         if [ -n "$DOWNLOAD_POLY" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget -nv "$DOWNLOAD_POLY" -O /data.poly
+            wget "$WGET_ARGS" "$DOWNLOAD_POLY" -O /data.poly
         fi
     fi
 
