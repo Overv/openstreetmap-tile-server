@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 # Based on
-# https://switch2osm.org/manually-building-a-tile-server-18-04-lts/
+# https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
 
 # Set up environment
 ENV TZ=UTC
