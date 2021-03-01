@@ -79,7 +79,7 @@ RUN apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Set up PostGIS
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.0.0.tar.gz -O postgis.tar.gz \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
  && mkdir -p postgis_src \
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
@@ -124,7 +124,7 @@ RUN mkdir -p /home/renderer/src \
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone --single-branch --branch v4.23.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+ && git clone --single-branch --branch v5.2.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
  && rm -rf .git \
  && npm install -g carto@0.18.2 \
@@ -170,7 +170,7 @@ RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
  && git clone https://github.com/zverik/regional \
  && cd regional \
- && git checkout 612fe3e040d8bb70d2ab3b133f3b2cfc6c940520 \
+ && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
  && rm -rf .git \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
 
