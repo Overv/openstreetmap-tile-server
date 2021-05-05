@@ -66,6 +66,7 @@ RUN apt-get install -y --no-install-recommends \
   python3-lxml \
   python3-psycopg2 \
   python3-shapely \
+  python3-pip \
   sudo \
   tar \
   ttf-unifont \
@@ -75,6 +76,10 @@ RUN apt-get install -y --no-install-recommends \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+# Install python libraries
+RUN pip3 install requests \ 
+ && pip3 install pyyaml
 
 # Set up PostGIS
 RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
@@ -122,13 +127,11 @@ RUN mkdir -p /home/renderer/src \
 # Configure stylesheet
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone --single-branch --branch v5.2.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+ && git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
  && rm -rf .git \
  && npm install -g carto@0.18.2 \
- && carto project.mml > mapnik.xml \
- && scripts/get-shapefiles.py \
- && rm /home/renderer/src/openstreetmap-carto/data/*.zip
+ && carto project.mml > mapnik.xml 
 
 # Configure renderd
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
