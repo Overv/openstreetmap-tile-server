@@ -3,9 +3,9 @@
 set -x
 
 function createPostgresConfig() {
-  cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
-  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
-  cat /etc/postgresql/12/main/conf.d/postgresql.custom.conf
+  cp /etc/postgresql/13/main/postgresql.custom.conf.tmpl /etc/postgresql/13/main/conf.d/postgresql.custom.conf
+  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/13/main/conf.d/postgresql.custom.conf
+  cat /etc/postgresql/13/main/conf.d/postgresql.custom.conf
 }
 
 function setPostgresPassword() {
@@ -26,7 +26,7 @@ fi
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
     chown postgres:postgres -R /var/lib/postgresql
-    if [ ! -f /var/lib/postgresql/12/main/PG_VERSION ]; then
+    if [ ! -f /var/lib/postgresql/13/main/PG_VERSION ]; then
         sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main/ initdb -o "--locale C.UTF-8"
     fi
 
