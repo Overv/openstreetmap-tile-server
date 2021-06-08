@@ -58,9 +58,9 @@ RUN apt-get install -y --no-install-recommends \
   osmium-tool \
   osmosis \
   postgis \
-  postgresql-12 \
-  postgresql-contrib-12 \
-  postgresql-server-dev-12 \
+  postgresql-13 \
+  postgresql-contrib-13 \
+  postgresql-server-dev-13 \
   protobuf-c-compiler \
   python3-mapnik \
   python3-lxml \
@@ -82,7 +82,7 @@ RUN pip3 install requests \
  && pip3 install pyyaml
 
 # Set up PostGIS
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.2.tar.gz -O postgis.tar.gz \
  && mkdir -p postgis_src \
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
@@ -152,11 +152,11 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log \
  && ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Configure PosgtreSQL
-COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
+COPY postgresql.custom.conf.tmpl /etc/postgresql/13/main/
 RUN chown -R postgres:postgres /var/lib/postgresql \
- && chown postgres:postgres /etc/postgresql/12/main/postgresql.custom.conf.tmpl \
- && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
- && echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+ && chown postgres:postgres /etc/postgresql/13/main/postgresql.custom.conf.tmpl \
+ && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/13/main/pg_hba.conf \
+ && echo "host all all ::/0 md5" >> /etc/postgresql/13/main/pg_hba.conf
 
 # Copy update scripts
 COPY openstreetmap-tiles-update-expire /usr/bin/
