@@ -133,6 +133,7 @@ RUN mkdir -p /home/renderer/src \
  && cd openstreetmap-carto \
  && rm -rf .git \
  && npm install -g carto \
+ && npm install -g millstone \
  && carto project.mml > mapnik.xml 
 
 # Configure renderd
