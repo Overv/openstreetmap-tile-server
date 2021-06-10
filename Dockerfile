@@ -36,14 +36,16 @@ RUN apt-get install -y --no-install-recommends \
   libboost-filesystem-dev \
   libboost-system-dev \
   libbz2-dev \
-  libcairo-dev \
+  libcairo2-dev \
   libcairomm-1.0-dev \
+  libcurl4-gnutls-dev \
   libexpat1-dev \
   libfreetype6-dev \
   libgdal-dev \
   libgeos++-dev \
   libgeos-dev \
   libicu-dev \
+  libiniparser-dev \
   liblua5.3-dev \
   libmapnik-dev \
   libpq-dev \
@@ -113,7 +115,7 @@ RUN mkdir -p /home/renderer/src \
 # Install mod_tile and renderd
 RUN mkdir -p /home/renderer/src \
  && cd /home/renderer/src \
- && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
+ && git clone -b master https://github.com/openstreetmap/mod_tile.git --depth 1 \
  && cd mod_tile \
  && rm -rf .git \
  && ./autogen.sh \
