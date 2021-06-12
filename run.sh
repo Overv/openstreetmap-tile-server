@@ -13,10 +13,11 @@ function setPostgresPassword() {
 }
 
 if [ "$#" -ne 1 ]; then
-    echo "usage: <import|run>"
+    echo "usage: <import|upgrade|run>"
     echo "commands:"
     echo "    import: Set up the database and import /data.osm.pbf"
-    echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
+    écho ".   upgrade: Upgrade the database 
+    echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png" 
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
     echo "    UPDATES: consecutive updates (enabled/disabled)"
@@ -90,6 +91,27 @@ if [ "$1" = "import" ]; then
     service postgresql stop
 
     exit 0
+fi
+
+if [ "$1" = "upgrade" ]; then
+
+    # Ensure that database directory is in right state
+    chown postgres:postgres -R /var/lib/postgresql
+    if [ ! -f /var/lib/postgresql/13/main/PG_VERSION ]; then
+        sudo -u postgres /usr/lib/postgresql/13/bin/pg_ctl -D /var/lib/postgresql/13/main/ initdb -o "--locale C.UTF-8"
+    fi
+
+    # Initialize PostgreSQL
+    createPostgresConfig
+    service postgresql start
+   
+
+
+
+    service postgresql stop
+
+    exit 0
+
 fi
 
 if [ "$1" = "run" ]; then
