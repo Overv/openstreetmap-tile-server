@@ -15,7 +15,5 @@ docker run --rm  \
   -w //tmp  \
   postgres:13  \
   psql -U postgres -d gis < dump.sql
-  
-sudo -u postgres psql -d gis -c "SELECT PostGIS_Extensions_Upgrade();"
 
 rm ./dump.sql
