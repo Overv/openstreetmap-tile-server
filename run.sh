@@ -104,10 +104,10 @@ if [ "$1" = "upgrade" ]; then
     # Initialize PostgreSQL
     createPostgresConfig
     service postgresql start
-   
 
-
-
+    # Upgrade PostGIS  
+    sudo -u postgres psql -d gis -c "SELECT PostGIS_Extensions_Upgrade();"
+    
     service postgresql stop
 
     exit 0
