@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Overv/openstreetmap-tile-server.svg?branch=master)](https://travis-ci.org/Overv/openstreetmap-tile-server) [![](https://images.microbadger.com/badges/image/overv/openstreetmap-tile-server.svg)](https://microbadger.com/images/overv/openstreetmap-tile-server "openstreetmap-tile-server")
 
-This container allows you to easily set up an OpenStreetMap PNG tile server given a `.osm.pbf` file. It is based on the [latest Ubuntu 18.04 LTS guide](https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/) from [switch2osm.org](https://switch2osm.org/) and therefore uses the default OpenStreetMap style.
+This container allows you to easily set up an OpenStreetMap PNG tile server given a `.osm.pbf` file. It is based on the [latest Ubuntu 20.04 LTS guide](https://switch2osm.org/serving-tiles/manually-building-a-tile-server-20-04-lts/) from [switch2osm.org](https://switch2osm.org/) and therefore uses the default OpenStreetMap style.
 
 ## Setting up the server
 
@@ -305,7 +305,7 @@ You may be running into problems with memory usage during the import. Have a loo
 
 ### Complement
 
-openstreetmap-pgrouting is available at https://github.com/Smartappli/openstreetmap-pgrouting
+openstreetmap-pgrouting is available at [openstreemap pgrouting server](https://github.com/Smartappli/openstreetmap-pgrouting-server/)
 
 ## License
 
