@@ -201,6 +201,70 @@ docker run \
 
 >Note that if you use a folder other than `/nodes` then you must make sure that you manually set the owner to `renderer`!
 
+### OSM Planet
+
+If you plan to import the entire planet, adapt the parameters to the characteristics of your server X and Y where X corresponds respectively to 3/4 of the max threads and Y to 3/4 of the available memory expressed in Mb.
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \  
+    -e UPDATES=enabled \
+    -v /absolute/path/to/planet-latest:/data.osm.pbf \
+    -v openstreetmap-nodes:/nodes \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -e AUTOVACUUM=off \
+    -e THREADS=X
+    -e "OSM2PGSQL_EXTRA_ARGS=-C Y --flat-nodes /nodes/flat_nodes.bin " \
+    overv/openstreetmap-tile-server \
+    import
+```
+
+For a machine with 24 cores and 40 Gb of available memory, the instructions adapt as follows:
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \   
+    -e UPDATES=enabled \
+    -v /absolute/path/to/planet-latest:/data.osm.pbf \
+    -v openstreetmap-nodes:/nodes \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -e AUTOVACUUM=off \
+    -e THREADS=18
+    -e "OSM2PGSQL_EXTRA_ARGS=-C 30720 --flat-nodes /nodes/flat_nodes.bin " \
+    overv/openstreetmap-tile-server \
+    import
+```
+
+For the running consider following instructions:
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \   
+    -e UPDATES=enabled \
+    -e AUTOVACUUM=on \
+    -e THREADS=6 \
+    -e ALLOW_CORS=enabled \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    --shm-size="384m" \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
+### Upgrading
+
+```
+sh upgrade.sh
+
+docker run \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    overv/openstreetmap-tile-server \
+    upgrade
+   
+```
+
 ### Benchmarks
 
 You can find an example of the import performance to expect with this image on the [OpenStreetMap wiki](https://wiki.openstreetmap.org/wiki/Osm2pgsql/benchmarks#debian_9_.2F_openstreetmap-tile-server).
