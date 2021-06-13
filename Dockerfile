@@ -30,10 +30,12 @@ RUN apt-get install -y --no-install-recommends \
   fonts-noto-cjk \
   fonts-noto-hinted \
   fonts-noto-unhinted \
+  g++ \
   gcc \
   gdal-bin \
   git-core \
   libagg-dev \
+  libboost-dev \
   libboost-filesystem-dev \
   libboost-system-dev \
   libbz2-dev \
@@ -61,6 +63,7 @@ RUN apt-get install -y --no-install-recommends \
   mapnik-utils \
   osmium-tool \
   osmosis \
+  pandoc \
   postgis \
   postgresql-13 \
   postgresql-contrib-13 \
@@ -109,6 +112,7 @@ RUN mkdir -p /home/renderer/src \
  && cd build \
  && cmake -D WITH_LUAJIT=ON .. \
  && make -j $(nproc) \
+ && make -j $(nproc) man \
  && make -j $(nproc) install \
  && mkdir /nodes \
  && chown renderer:renderer /nodes \
