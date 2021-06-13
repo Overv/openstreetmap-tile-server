@@ -48,6 +48,7 @@ RUN apt-get install -y --no-install-recommends \
   libicu-dev \
   libiniparser-dev \
   liblua5.3-dev \
+  libluajit-5.1-dev \
   libmapnik-dev \
   libpq-dev \
   libproj-dev \
@@ -106,7 +107,7 @@ RUN mkdir -p /home/renderer/src \
  && rm -rf .git \
  && mkdir build \
  && cd build \
- && cmake .. \
+ && cmake -D WITH_LUAJIT=ON .. \
  && make -j $(nproc) \
  && make -j $(nproc) install \
  && mkdir /nodes \
