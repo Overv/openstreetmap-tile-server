@@ -253,7 +253,9 @@ docker run \
     run
 ```
 
-### Upgrading
+### Upgrade from a previous version
+
+The update assumes that you have previously installed version 1.7.0 or earlier on your server. You must stop the docker container and perform the two update steps which consists of upgrading the database from postgresql 12 to postgresql 13 using the upgrade.sh script and then upgrading the software stack using the command line given below.
 
 ```
 sh upgrade.sh
@@ -262,7 +264,15 @@ docker run \
     -v openstreetmap-data:/var/lib/postgresql/13/main \
     overv/openstreetmap-tile-server \
     upgrade
-   
+```
+
+The use of upgrade.sh script on the entire planet requires a storage space of 4Tb to store the database dump during the migration and very long if you use the upgrade script. We advise you in case of carrying out a fast import from a complete dump of the database.
+
+```
+docker run \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    overv/openstreetmap-tile-server \
+    planet
 ```
 
 ### Benchmarks
