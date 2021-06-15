@@ -248,7 +248,7 @@ docker run \
     -e THREADS=6 \
     -e ALLOW_CORS=enabled \
     -v openstreetmap-data:/var/lib/postgresql/13/main \
-    --shm-size="384m" \
+    --shm-size="512m" \
     -d overv/openstreetmap-tile-server \
     run
 ```
