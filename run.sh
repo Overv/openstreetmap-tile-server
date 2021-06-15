@@ -114,7 +114,7 @@ if [ "$1" = "planet" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
     setPostgresPassword
 
-    DOWNLOAD_DUMP="https://osm.smartappli.eu/dump.sql"
+    DOWNLOAD_DUMP="https://osm.ig.umons.ac.be/dump.sql"
     wget "$WGET_ARGS" "$DOWNLOAD_DUMP" -O /osm.sql
 
     if [ "$UPDATES" = "enabled" ]; then
