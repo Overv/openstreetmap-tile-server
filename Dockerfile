@@ -78,6 +78,7 @@ RUN apt-get install -y --no-install-recommends \
   tar \
   ttf-unifont \
   unzip \
+  ufw \
   varnish \
   wget \
   zlib1g-dev \
