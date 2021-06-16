@@ -5,7 +5,7 @@ FROM ubuntu:20.04
 
 # Set up environment
 ENV TZ=UTC
-ENV AUTOVACUUM=on
+ENV AUTOVACUUM=off
 ENV UPDATES=disabled
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -78,7 +78,6 @@ RUN apt-get install -y --no-install-recommends \
   tar \
   ttf-unifont \
   unzip \
-  ufw \
   varnish \
   wget \
   zlib1g-dev \
@@ -193,10 +192,10 @@ RUN mkdir -p /home/renderer/src \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
  
 # Firewall configuration
-RUN ufw allow ssh \
- && ufw allow http \
- && ufw allow https \
- && ufw enable
+#RUN RUN ufw allow ssh \
+# é& ufw allow http \
+# && ufw allow https \
+# && ufw enable
 
 # Start running
 COPY run.sh /
