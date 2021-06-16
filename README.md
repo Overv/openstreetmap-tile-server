@@ -1,7 +1,5 @@
 # Openstreetmap-tile-server 2.0
 
-[![Build Status](https://travis-ci.org/Overv/openstreetmap-tile-server.svg?branch=master)](https://travis-ci.org/Overv/openstreetmap-tile-server) [![](https://images.microbadger.com/badges/image/overv/openstreetmap-tile-server.svg)](https://microbadger.com/images/overv/openstreetmap-tile-server "openstreetmap-tile-server")
-
 This container allows you to easily set up an OpenStreetMap PNG tile server given a `.osm.pbf` file. It is based on the [latest Ubuntu 20.04 LTS guide](https://switch2osm.org/serving-tiles/manually-building-a-tile-server-20-04-lts/) from [switch2osm.org](https://switch2osm.org/) and therefore uses the default OpenStreetMap style.
 
 ## Setting up the server
@@ -13,7 +11,7 @@ First create a Docker volume to hold the PostgreSQL database that will contain t
 Next, download an .osm.pbf extract from geofabrik.de for the region that you're interested in. You can then start importing it into PostgreSQL by running a container and mounting the file as `/data.osm.pbf`. For example:
 
 ```
-docker run \
+docker run --name osm \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v openstreetmap-data:/var/lib/postgresql/13/main \
     overv/openstreetmap-tile-server \
