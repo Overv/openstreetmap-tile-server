@@ -159,9 +159,8 @@ COPY apache.conf /etc/apache2/sites-available/000-default.conf
 COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /dev/stdout /var/log/apache2/access.log \
  && ln -sf /dev/stderr /var/log/apache2/error.log \
- && cd /etc/apache2 \
- && sed -i -e 's/80/8080/g' ports.conf \
- && sed -i -e 's/80/8080/g' sites-available/* \
+ && sed -i -e 's/80/8080/g' /etc/apache2/ports.conf \
+ && sed -i -e 's/80/8080/g' /etc/apache2/sites-available/* \
  
 # Configure Varnish
 RUN systemctl start varnish \
