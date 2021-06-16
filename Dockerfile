@@ -15,6 +15,7 @@ RUN apt-get update \
   && apt-get install -y wget gnupg2 lsb-core apt-transport-https ca-certificates curl \
   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
   && echo "deb [ trusted=yes ] https://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
+  && curl http://repo.varnish-cache.org/debian/GPG-key.txt | sudo apt-key add -
   && wget --quiet -O - https://deb.nodesource.com/setup_16.x | bash - \
   && apt-get update \
   && apt-get install -y nodejs
@@ -182,6 +183,12 @@ RUN mkdir -p /home/renderer/src \
  && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
  && rm -rf .git \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
+ 
+# Firewall configuration
+RUN ufw allow ssh \
+ && ufw allow http \
+ && ufw allow https \
+ && ufw enable
 
 # Start running
 COPY run.sh /
