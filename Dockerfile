@@ -164,8 +164,8 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log \
  && sed -i -e 's/80/8080/g' /etc/apache2/sites-available/* 
  
 # Configure Varnish
-RUN rm /etc/varnish/devault.vcl \
- && cp varnish.vcl /etc/varnish/devault.vcl
+RUN rm /etc/varnish/devault.vcl 
+COPY varnish.vcl /etc/varnish/devault.vcl
 
 # Configure PosgtreSQL
 COPY postgresql.custom.conf.tmpl /etc/postgresql/13/main/
