@@ -39,7 +39,7 @@ RUN apt-get install -y --no-install-recommends \
   libboost-dev \
   libboost-filesystem-dev \
   libboost-system-dev \
-  libbrotli \
+  libbrotli-dev \
   libbz2-dev \
   libcairo2-dev \
   libcairomm-1.0-dev \
