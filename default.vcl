@@ -11,6 +11,27 @@ sub vcl_recv {
     #
     # Typically you clean up the request here, removing cookies you don't need,
     # rewriting the request, etc.
+    
+    if(req.http.Accept-Encoding ~ "br" && req.url !~
+            "\.(jpg|png|gif)$") {
+        set req.http.X-brotli = "true";
+    }
+}
+
+
+sub vcl_hash
+{
+    if(req.http.X-brotli == "true") {
+        hash_data("brotli");
+    }
+}
+
+sub vcl_backend_fetch
+{
+    if(bereq.http.X-brotli == "true") {
+        set bereq.http.Accept-Encoding = "br";
+        unset bereq.http.X-brotli;
+    }
 }
 
 sub vcl_backend_response {
