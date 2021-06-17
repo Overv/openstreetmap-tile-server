@@ -164,8 +164,8 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log \
  && sed -i -e 's/80/8080/g' /etc/apache2/sites-available/* 
  
 # Configure Varnish
-#RUN systemctl start varnish \
-# && systemctl enable varnish
+RUN rm /etc/varnish/devault.vcl \
+ && cp varnish.vcl /etc/varnish/devault.vcl
 
 # Configure PosgtreSQL
 COPY postgresql.custom.conf.tmpl /etc/postgresql/13/main/
@@ -191,12 +191,6 @@ RUN mkdir -p /home/renderer/src \
  && rm -rf .git \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
  
-# Firewall configuration
-#RUN RUN ufw allow ssh \
-# é& ufw allow http \
-# && ufw allow https \
-# && ufw enable
-
 # Start running
 COPY run.sh /
 COPY indexes.sql /
