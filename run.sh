@@ -175,11 +175,12 @@ if [ "$1" = "run" ]; then
         echo "export APACHE_ARGUMENTS='-D ALLOW_CORS'" >> /etc/apache2/envvars
     fi
 
-    # Initialize PostgreSQL and Apache
+    # Initialize Varnish, PostgreSQL and Apache
     createPostgresConfig
     service postgresql start
     service apache2 restart
     setPostgresPassword
+    varnishd -F -f /etc/varnish/default.vcl -a http=:80,HTTP -a proxy=:8443,PROXY -p feature=+http2 -s malloc,3g
 
     # Configure renderd threads
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
