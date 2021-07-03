@@ -62,6 +62,7 @@ RUN apt-get install -y --no-install-recommends \
   postgresql-contrib-12 \
   postgresql-server-dev-12 \
   protobuf-c-compiler \
+  python-is-python3 \
   python3-mapnik \
   python3-lxml \
   python3-psycopg2 \
