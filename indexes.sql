@@ -32,7 +32,7 @@ CREATE INDEX planet_osm_polygon_nobuilding
   ON planet_osm_polygon USING GIST (way)
   WHERE building IS NULL;
 CREATE INDEX planet_osm_polygon_name
-  ON planet_osm_polygon USING GIST (way)
+  ON planet_osm_polygon USING GIST (ST_PointOnSurface(way))
   WHERE name IS NOT NULL;
 CREATE INDEX planet_osm_polygon_way_area_z10
   ON planet_osm_polygon USING GIST (way)
