@@ -76,8 +76,8 @@ if [ "$1" = "import" ]; then
     sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS}
 
     # Create indexes
-    sudo -u postgres psql -d gis -f indexes.sql
- 
+    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
+
     #Import external data
     sudo chown -R renderer: /home/renderer/src
     sudo -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data

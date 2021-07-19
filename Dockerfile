@@ -79,7 +79,7 @@ RUN apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Install python libraries
-RUN pip3 install requests \ 
+RUN pip3 install requests \
  && pip3 install pyyaml
 
 # Set up PostGIS
@@ -132,7 +132,7 @@ RUN mkdir -p /home/renderer/src \
  && cd openstreetmap-carto \
  && rm -rf .git \
  && npm install -g carto@0.18.2 \
- && carto project.mml > mapnik.xml 
+ && carto project.mml > mapnik.xml
 
 # Configure renderd
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
@@ -178,7 +178,6 @@ RUN mkdir -p /home/renderer/src \
 
 # Start running
 COPY run.sh /
-COPY indexes.sql /
 ENTRYPOINT ["/run.sh"]
 CMD []
 
