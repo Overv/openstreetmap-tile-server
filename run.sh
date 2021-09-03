@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 function createPostgresConfig() {
   cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
@@ -22,6 +20,8 @@ if [ "$#" -ne 1 ]; then
     echo "    UPDATES: consecutive updates (enabled/disabled)"
     exit 1
 fi
+
+set -x
 
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
