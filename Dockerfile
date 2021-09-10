@@ -1,9 +1,7 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 AS compiler
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
-
-# Set up environment
 ENV TZ=UTC
 ENV AUTOVACUUM=on
 ENV UPDATES=disabled
@@ -11,76 +9,38 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
 RUN apt-get update \
-  && apt-get install -y wget gnupg2 lsb-core apt-transport-https ca-certificates curl \
-  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-  && echo "deb [ trusted=yes ] https://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
-  && wget --quiet -O - https://deb.nodesource.com/setup_14.x | bash - \
-  && apt-get update \
-  && apt-get install -y nodejs
-
-RUN apt-get install -y --no-install-recommends \
-  apache2 \
-  apache2-dev \
-  autoconf \
-  build-essential \
-  bzip2 \
-  cmake \
-  cron \
-  fonts-noto-cjk \
-  fonts-noto-hinted \
-  fonts-noto-unhinted \
-  gcc \
-  gdal-bin \
+&& apt-get install -y --no-install-recommends \
+  # Common
   git-core \
-  libagg-dev \
-  libboost-filesystem-dev \
+  checkinstall \
+  make \
+  tar \
+  wget \
+  # Compile postgis
+  postgresql-server-dev-12 \
+  # Compile osm2pgsql
+  cmake \
+  g++ \
+  libboost-dev \
   libboost-system-dev \
-  libbz2-dev \
-  libcairo-dev \
-  libcairomm-1.0-dev \
+  libboost-filesystem-dev \
   libexpat1-dev \
-  libfreetype6-dev \
-  libgdal-dev \
-  libgeos++-dev \
-  libgeos-dev \
-  libicu-dev \
-  liblua5.3-dev \
-  libmapnik-dev \
+  zlib1g-dev \
+  libbz2-dev \
   libpq-dev \
   libproj-dev \
-  libprotobuf-c-dev \
-  libtiff5-dev \
-  libtool \
-  libxml2-dev \
   lua5.3 \
-  make \
-  mapnik-utils \
-  osmium-tool \
-  osmosis \
-  postgis \
-  postgresql-12 \
-  postgresql-contrib-12 \
-  postgresql-server-dev-12 \
-  protobuf-c-compiler \
-  python-is-python3 \
-  python3-mapnik \
-  python3-lxml \
-  python3-psycopg2 \
-  python3-shapely \
-  python3-pip \
-  sudo \
-  tar \
-  ttf-unifont \
-  unzip \
-  wget \
-  zlib1g-dev \
-&& apt-get clean autoclean \
-&& apt-get autoremove --yes \
-&& rm -rf /var/lib/{apt,dpkg,cache,log}/
-
-# Install python libraries
-RUN pip3 install requests \
- && pip3 install pyyaml
+  liblua5.3-dev \
+  pandoc \
+  # Compile mod_tile and renderd
+  apache2-dev \
+  automake \
+  autoconf \
+  autotools-dev \
+  libtool \
+  libmapnik-dev \
+  # Configure stylesheet
+  npm
 
 # Set up PostGIS
 RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
@@ -88,56 +48,85 @@ RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postg
  && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
  && rm postgis.tar.gz \
  && cd postgis_src \
- && ./configure \
+ && ./configure --without-protobuf \
  && make -j $(nproc) \
- && make -j $(nproc) install \
- && cd .. && rm -rf postgis_src
-
-# Set up renderer user
-RUN adduser --disabled-password --gecos "" renderer
+ && checkinstall --pkgversion="3.1.1" --install=no --default make install
 
 # Install latest osm2pgsql
-RUN mkdir -p /home/renderer/src \
- && cd /home/renderer/src \
- && git clone -b master https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
- && cd /home/renderer/src/osm2pgsql \
- && rm -rf .git \
+RUN cd ~ \
+ && git clone -b master --single-branch https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
+ && cd osm2pgsql \
  && mkdir build \
  && cd build \
  && cmake .. \
  && make -j $(nproc) \
- && make -j $(nproc) install \
- && mkdir /nodes \
- && chown renderer:renderer /nodes \
- && rm -rf /home/renderer/src/osm2pgsql
+ && checkinstall --pkgversion="1" --install=no --default make install
 
 # Install mod_tile and renderd
-RUN mkdir -p /home/renderer/src \
- && cd /home/renderer/src \
- && git clone -b switch2osm https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
+RUN cd ~ \
+ && git clone -b switch2osm --single-branch https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
  && cd mod_tile \
- && rm -rf .git \
  && ./autogen.sh \
  && ./configure \
  && make -j $(nproc) \
- && make -j $(nproc) install \
- && make -j $(nproc) install-mod_tile \
- && ldconfig \
- && cd ..
+ && checkinstall --pkgversion="1" --install=no --pkgname "renderd" --default make install \
+ && checkinstall --pkgversion="1" --install=no --pkgname "mod_tile" --default make install-mod_tile
 
 # Configure stylesheet
-RUN mkdir -p /home/renderer/src \
- && cd /home/renderer/src \
+RUN cd ~ \
  && git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
- && rm -rf .git \
  && npm install -g carto@0.18.2 \
  && carto project.mml > mapnik.xml
 
-# Configure renderd
-RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
- && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
- && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+###########################################################################################################
+
+FROM ubuntu:20.04
+
+# Based on
+# https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
+ENV TZ=UTC
+ENV AUTOVACUUM=on
+ENV UPDATES=disabled
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Get packages
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
+  apache2 \
+  cron \
+  fonts-noto-cjk \
+  fonts-noto-hinted \
+  fonts-noto-unhinted \
+  gdal-bin \
+  git-core \
+  liblua5.3-dev \
+  lua5.3 \
+  mapnik-utils \
+  osmium-tool \
+  osmosis \
+  postgresql-12 \
+  postgresql-contrib-12 \
+  python-is-python3 \
+  python3-mapnik \
+  python3-lxml \
+  python3-psycopg2 \
+  python3-shapely \
+  python3-pip \
+  sudo \
+  ttf-unifont \
+  wget \
+&& apt-get clean autoclean \
+&& apt-get autoremove --yes \
+&& rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+RUN adduser --disabled-password --gecos "" renderer \
+&& mkdir -p /home/renderer/src
+
+# Install python libraries
+RUN pip3 install \
+ requests \
+ pyyaml
 
 # Configure Apache
 RUN mkdir /var/lib/mod_tile \
@@ -159,26 +148,50 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
  && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
  && echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
 
+# Install PostGIS
+COPY --from=compiler postgis_src/postgis-src_3.1.1-1_amd64.deb .
+RUN dpkg -i postgis-src_3.1.1-1_amd64.deb
+
+# Install osm2pgsql
+COPY --from=compiler /root/osm2pgsql/build/build_1-1_amd64.deb .
+RUN dpkg -i build_1-1_amd64.deb 
+
+COPY --from=compiler /root/mod_tile/renderd_1-1_amd64.deb .
+RUN dpkg -i renderd_1-1_amd64.deb
+
+# Install mod_tile
+COPY --from=compiler /root/mod_tile/mod-tile_1-1_amd64.deb .
+RUN dpkg -i mod-tile_1-1_amd64.deb && ldconfig
+
+# Install stylesheet
+COPY --from=compiler /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
+
+# Configure renderd
+RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+ && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
+ && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+
 # Copy update scripts
 COPY openstreetmap-tiles-update-expire /usr/bin/
 RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && mkdir /var/log/tiles \
  && chmod a+rw /var/log/tiles \
  && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
- && echo "*  *    * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
+ && echo "* * * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
 # Install trim_osc.py helper script
-RUN mkdir -p /home/renderer/src \
- && cd /home/renderer/src \
+RUN cd /home/renderer/src \
  && git clone https://github.com/zverik/regional \
  && cd regional \
  && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
  && rm -rf .git \
  && chmod u+x /home/renderer/src/regional/trim_osc.py
 
+RUN mkdir /nodes \
+ && chown renderer:renderer /nodes
+
 # Start running
 COPY run.sh /
 ENTRYPOINT ["/run.sh"]
 CMD []
-
 EXPOSE 80 5432
