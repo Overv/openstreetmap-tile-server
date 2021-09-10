@@ -151,19 +151,24 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 
 # Install PostGIS
 COPY --from=compiler postgis_src/postgis-src_3.1.1-1_amd64.deb .
-RUN dpkg -i postgis-src_3.1.1-1_amd64.deb
+RUN dpkg -i postgis-src_3.1.1-1_amd64.deb \
+  && rm postgis-src_3.1.1-1_amd64.deb
 
 # Install osm2pgsql
 COPY --from=compiler /root/osm2pgsql/build/build_1-1_amd64.deb .
-RUN dpkg -i build_1-1_amd64.deb 
+RUN dpkg -i build_1-1_amd64.deb \
+  && rm build_1-1_amd64.deb
 
 # Install renderd
 COPY --from=compiler /root/mod_tile/renderd_1-1_amd64.deb .
-RUN dpkg -i renderd_1-1_amd64.deb
+RUN dpkg -i renderd_1-1_amd64.deb \
+  && rm renderd_1-1_amd64.deb
 
 # Install mod_tile
 COPY --from=compiler /root/mod_tile/mod-tile_1-1_amd64.deb .
-RUN dpkg -i mod-tile_1-1_amd64.deb && ldconfig
+RUN dpkg -i mod-tile_1-1_amd64.deb \
+  && ldconfig \
+  && rm mod-tile_1-1_amd64.deb
 
 # Install stylesheet
 COPY --from=compiler /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
