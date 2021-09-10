@@ -157,6 +157,7 @@ RUN dpkg -i postgis-src_3.1.1-1_amd64.deb
 COPY --from=compiler /root/osm2pgsql/build/build_1-1_amd64.deb .
 RUN dpkg -i build_1-1_amd64.deb 
 
+# Install renderd
 COPY --from=compiler /root/mod_tile/renderd_1-1_amd64.deb .
 RUN dpkg -i renderd_1-1_amd64.deb
 
