@@ -1,18 +1,17 @@
 FROM ubuntu:20.04 AS compiler-common
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
-  git-core \
-  checkinstall \
-  make \
-  tar \
-  wget
+ git-core \
+ checkinstall \
+ make \
+ tar \
+ wget
 
 ###########################################################################################################
 
 FROM compiler-common AS compiler-postgis  
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
-  postgresql-server-dev-12
+RUN apt-get install -y --no-install-recommends \
+ postgresql-server-dev-12
 RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
 && mkdir -p postgis_src \
 && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
@@ -25,8 +24,7 @@ RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postg
 ###########################################################################################################
 
 FROM compiler-common AS compiler-osm2pgsql
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
  cmake \
  g++ \
  libboost-dev \
@@ -52,8 +50,7 @@ RUN cd ~ \
 ###########################################################################################################
 
 FROM compiler-common AS compiler-modtile-renderd
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
  apache2-dev \
  automake \
  autoconf \
@@ -72,8 +69,7 @@ RUN cd ~ \
 ###########################################################################################################
 
 FROM compiler-common AS compiler-stylesheet
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
  npm
 RUN cd ~ \
 && git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
