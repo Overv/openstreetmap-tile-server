@@ -1,24 +1,32 @@
-FROM ubuntu:20.04 AS compiler
-
-# Based on
-# https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
-ENV TZ=UTC
-ENV AUTOVACUUM=on
-ENV UPDATES=disabled
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Install dependencies
+FROM ubuntu:20.04 AS compiler-common
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
-  # Common
   git-core \
   checkinstall \
   make \
   tar \
-  wget \
-  # Compile postgis
-  postgresql-server-dev-12 \
-  # Compile osm2pgsql
+  wget
+
+###########################################################################################################
+
+FROM compiler-common AS compiler-postgis  
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
+  postgresql-server-dev-12
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
+ && mkdir -p postgis_src \
+ && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
+ && rm postgis.tar.gz \
+ && cd postgis_src \
+ && ./configure --without-protobuf \
+ && make -j $(nproc) \
+ && checkinstall --pkgversion="3.1.1" --install=no --default make install
+
+###########################################################################################################
+
+FROM compiler-common AS compiler-osm2pgsql
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
   cmake \
   g++ \
   libboost-dev \
@@ -31,28 +39,7 @@ RUN apt-get update \
   libproj-dev \
   lua5.3 \
   liblua5.3-dev \
-  pandoc \
-  # Compile mod_tile and renderd
-  apache2-dev \
-  automake \
-  autoconf \
-  autotools-dev \
-  libtool \
-  libmapnik-dev \
-  # Configure stylesheet
-  npm
-
-# Set up PostGIS
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
- && mkdir -p postgis_src \
- && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
- && rm postgis.tar.gz \
- && cd postgis_src \
- && ./configure --without-protobuf \
- && make -j $(nproc) \
- && checkinstall --pkgversion="3.1.1" --install=no --default make install
-
-# Install latest osm2pgsql
+  pandoc
 RUN cd ~ \
  && git clone -b master --single-branch https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
  && cd osm2pgsql \
@@ -62,7 +49,17 @@ RUN cd ~ \
  && make -j $(nproc) \
  && checkinstall --pkgversion="1" --install=no --default make install
 
-# Install mod_tile and renderd
+###########################################################################################################
+
+FROM compiler-common AS compiler-modtile-renderd
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
+  apache2-dev \
+  automake \
+  autoconf \
+  autotools-dev \
+  libtool \
+  libmapnik-dev
 RUN cd ~ \
  && git clone -b switch2osm --single-branch https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
  && cd mod_tile \
@@ -71,8 +68,11 @@ RUN cd ~ \
  && make -j $(nproc) \
  && checkinstall --pkgversion="1" --install=no --pkgname "renderd" --default make install \
  && checkinstall --pkgversion="1" --install=no --pkgname "mod_tile" --default make install-mod_tile
-
-# Configure stylesheet
+  
+FROM compiler-common AS compiler-stylesheet
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends \
+  npm
 RUN cd ~ \
  && git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
@@ -82,7 +82,7 @@ RUN cd ~ \
 
 ###########################################################################################################
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04 AS final-base
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
@@ -142,42 +142,6 @@ COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /dev/stdout /var/log/apache2/access.log \
  && ln -sf /dev/stderr /var/log/apache2/error.log
 
-# Configure PosgtreSQL
-COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
-RUN chown -R postgres:postgres /var/lib/postgresql \
- && chown postgres:postgres /etc/postgresql/12/main/postgresql.custom.conf.tmpl \
- && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
- && echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
-
-# Install PostGIS
-COPY --from=compiler postgis_src/postgis-src_3.1.1-1_amd64.deb .
-RUN dpkg -i postgis-src_3.1.1-1_amd64.deb \
-  && rm postgis-src_3.1.1-1_amd64.deb
-
-# Install osm2pgsql
-COPY --from=compiler /root/osm2pgsql/build/build_1-1_amd64.deb .
-RUN dpkg -i build_1-1_amd64.deb \
-  && rm build_1-1_amd64.deb
-
-# Install renderd
-COPY --from=compiler /root/mod_tile/renderd_1-1_amd64.deb .
-RUN dpkg -i renderd_1-1_amd64.deb \
-  && rm renderd_1-1_amd64.deb
-
-# Install mod_tile
-COPY --from=compiler /root/mod_tile/mod-tile_1-1_amd64.deb .
-RUN dpkg -i mod-tile_1-1_amd64.deb \
-  && ldconfig \
-  && rm mod-tile_1-1_amd64.deb
-
-# Install stylesheet
-COPY --from=compiler /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
-
-# Configure renderd
-RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
- && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
- && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
-
 # Copy update scripts
 COPY openstreetmap-tiles-update-expire /usr/bin/
 RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
@@ -196,6 +160,46 @@ RUN cd /home/renderer/src \
 
 RUN mkdir /nodes \
  && chown renderer:renderer /nodes
+
+# Configure PosgtreSQL
+COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
+RUN chown -R postgres:postgres /var/lib/postgresql \
+ && chown postgres:postgres /etc/postgresql/12/main/postgresql.custom.conf.tmpl \
+ && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
+ && echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+
+###########################################################################################################
+
+FROM final-base AS final
+
+# Install PostGIS
+COPY --from=compiler-postgis postgis_src/postgis-src_3.1.1-1_amd64.deb .
+RUN dpkg -i postgis-src_3.1.1-1_amd64.deb \
+  && rm postgis-src_3.1.1-1_amd64.deb
+
+# Install osm2pgsql
+COPY --from=compiler-osm2pgsql /root/osm2pgsql/build/build_1-1_amd64.deb .
+RUN dpkg -i build_1-1_amd64.deb \
+  && rm build_1-1_amd64.deb
+
+# Install renderd
+COPY --from=compiler-modtile-renderd /root/mod_tile/renderd_1-1_amd64.deb .
+RUN dpkg -i renderd_1-1_amd64.deb \
+  && rm renderd_1-1_amd64.deb
+
+# Install mod_tile
+COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
+RUN dpkg -i mod-tile_1-1_amd64.deb \
+  && ldconfig \
+  && rm mod-tile_1-1_amd64.deb
+
+# Install stylesheet
+COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
+
+# Configure renderd
+RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+ && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
+ && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
 
 # Start running
 COPY run.sh /
