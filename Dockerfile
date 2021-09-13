@@ -68,7 +68,9 @@ RUN cd ~ \
  && make -j $(nproc) \
  && checkinstall --pkgversion="1" --install=no --pkgname "renderd" --default make install \
  && checkinstall --pkgversion="1" --install=no --pkgname "mod_tile" --default make install-mod_tile
-  
+
+###########################################################################################################
+
 FROM compiler-common AS compiler-stylesheet
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
@@ -79,6 +81,16 @@ RUN cd ~ \
  && sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
  && npm install -g carto@0.18.2 \
  && carto project.mml > mapnik.xml
+
+###########################################################################################################
+
+FROM compiler-common AS compiler-helper-script
+RUN cd /home/renderer/src \
+ && git clone https://github.com/zverik/regional \
+ && cd regional \
+ && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
+ && rm -rf .git \
+ && chmod u+x /home/renderer/src/regional/trim_osc.py
 
 ###########################################################################################################
 
@@ -100,7 +112,6 @@ RUN apt-get update \
   fonts-noto-hinted \
   fonts-noto-unhinted \
   gdal-bin \
-  git-core \
   liblua5.3-dev \
   lua5.3 \
   mapnik-utils \
@@ -150,14 +161,6 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
  && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
  && echo "* * * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
-# Install trim_osc.py helper script
-RUN cd /home/renderer/src \
- && git clone https://github.com/zverik/regional \
- && cd regional \
- && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
- && rm -rf .git \
- && chmod u+x /home/renderer/src/regional/trim_osc.py
-
 RUN mkdir /nodes \
  && chown renderer:renderer /nodes
 
@@ -185,7 +188,10 @@ RUN dpkg -i build_1-1_amd64.deb \
 # Install renderd
 COPY --from=compiler-modtile-renderd /root/mod_tile/renderd_1-1_amd64.deb .
 RUN dpkg -i renderd_1-1_amd64.deb \
-  && rm renderd_1-1_amd64.deb
+  && rm renderd_1-1_amd64.deb \
+  && sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+  && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
+  && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
 
 # Install mod_tile
 COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
@@ -196,10 +202,8 @@ RUN dpkg -i mod-tile_1-1_amd64.deb \
 # Install stylesheet
 COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
 
-# Configure renderd
-RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
- && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
- && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+# Install helper script
+COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
 # Start running
 COPY run.sh /
