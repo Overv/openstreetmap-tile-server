@@ -1,23 +1,29 @@
 FROM ubuntu:20.04 AS compiler-common
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
  git-core \
  checkinstall \
+ g++ \
  make \
  tar \
  wget
 
 ###########################################################################################################
 
-FROM compiler-common AS compiler-postgis  
+FROM compiler-common AS compiler-postgis
 RUN apt-get install -y --no-install-recommends \
- postgresql-server-dev-12
+ postgresql-server-dev-12 \
+ libxml2-dev \
+ libgeos-dev \
+ libproj-dev
 RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
 && mkdir -p postgis_src \
 && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
 && rm postgis.tar.gz \
 && cd postgis_src \
-&& ./configure --without-protobuf \
+&& ./configure --without-protobuf --without-raster \
 && make -j $(nproc) \
 && checkinstall --pkgversion="3.1.1" --install=no --default make install
 
@@ -26,7 +32,6 @@ RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postg
 FROM compiler-common AS compiler-osm2pgsql
 RUN apt-get install -y --no-install-recommends \
  cmake \
- g++ \
  libboost-dev \
  libboost-system-dev \
  libboost-filesystem-dev \
@@ -81,7 +86,8 @@ RUN cd ~ \
 ###########################################################################################################
 
 FROM compiler-common AS compiler-helper-script
-RUN cd /home/renderer/src \
+RUN mkdir -p /home/renderer/src \
+&& cd /home/renderer/src \
 && git clone https://github.com/zverik/regional \
 && cd regional \
 && git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
@@ -94,7 +100,7 @@ FROM ubuntu:20.04 AS final-base
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
-ENV TZ=UTC
+ENV DEBIAN_FRONTEND=noninteractive
 ENV AUTOVACUUM=on
 ENV UPDATES=disabled
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -114,7 +120,6 @@ RUN apt-get update \
  osmium-tool \
  osmosis \
  postgresql-12 \
- postgresql-contrib-12 \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -128,8 +133,7 @@ RUN apt-get update \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-RUN adduser --disabled-password --gecos "" renderer \
-&& mkdir -p /home/renderer/src
+RUN adduser --disabled-password --gecos "" renderer
 
 # Install python libraries
 RUN pip3 install \
