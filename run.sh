@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 function createPostgresConfig() {
   cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
@@ -22,6 +20,8 @@ if [ "$#" -ne 1 ]; then
     echo "    UPDATES: consecutive updates (enabled/disabled)"
     exit 1
 fi
+
+set -x
 
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
@@ -50,10 +50,10 @@ if [ "$1" = "import" ]; then
 
     if [ -n "$DOWNLOAD_PBF" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget "$WGET_ARGS" "$DOWNLOAD_PBF" -O /data.osm.pbf
+        wget $WGET_ARGS "$DOWNLOAD_PBF" -O /data.osm.pbf
         if [ -n "$DOWNLOAD_POLY" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget "$WGET_ARGS" "$DOWNLOAD_POLY" -O /data.poly
+            wget $WGET_ARGS "$DOWNLOAD_POLY" -O /data.poly
         fi
     fi
 
@@ -76,8 +76,8 @@ if [ "$1" = "import" ]; then
     sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS}
 
     # Create indexes
-    sudo -u postgres psql -d gis -f indexes.sql
- 
+    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
+
     #Import external data
     sudo chown -R renderer: /home/renderer/src
     sudo -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data

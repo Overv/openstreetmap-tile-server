@@ -62,6 +62,7 @@ RUN apt-get install -y --no-install-recommends \
   postgresql-contrib-12 \
   postgresql-server-dev-12 \
   protobuf-c-compiler \
+  python-is-python3 \
   python3-mapnik \
   python3-lxml \
   python3-psycopg2 \
@@ -78,7 +79,7 @@ RUN apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 # Install python libraries
-RUN pip3 install requests \ 
+RUN pip3 install requests \
  && pip3 install pyyaml
 
 # Set up PostGIS
@@ -130,8 +131,9 @@ RUN mkdir -p /home/renderer/src \
  && git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
  && cd openstreetmap-carto \
  && rm -rf .git \
+ && sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
  && npm install -g carto@0.18.2 \
- && carto project.mml > mapnik.xml 
+ && carto project.mml > mapnik.xml
 
 # Configure renderd
 RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
@@ -177,7 +179,6 @@ RUN mkdir -p /home/renderer/src \
 
 # Start running
 COPY run.sh /
-COPY indexes.sql /
 ENTRYPOINT ["/run.sh"]
 CMD []
 
