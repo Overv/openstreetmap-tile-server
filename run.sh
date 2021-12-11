@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 function createPostgresConfig() {
   cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
@@ -42,22 +44,22 @@ if [ "$1" = "import" ]; then
     setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data.osm.pbf ] && [ -z "$DOWNLOAD_PBF" ]; then
+    if [ ! -f /data.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
         echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
         DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
         DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
     fi
 
-    if [ -n "$DOWNLOAD_PBF" ]; then
+    if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget $WGET_ARGS "$DOWNLOAD_PBF" -O /data.osm.pbf
+        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data.osm.pbf
         if [ -n "$DOWNLOAD_POLY" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget $WGET_ARGS "$DOWNLOAD_POLY" -O /data.poly
+            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data.poly
         fi
     fi
 
-    if [ "$UPDATES" = "enabled" ]; then
+    if [ "${UPDATES:-}" = "enabled" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
         osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
         osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
@@ -73,7 +75,7 @@ if [ "$1" = "import" ]; then
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS}
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
 
     # Create indexes
     sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
@@ -98,7 +100,7 @@ if [ "$1" = "run" ]; then
     chown postgres:postgres /var/lib/postgresql -R
 
     # Configure Apache CORS
-    if [ "$ALLOW_CORS" == "enabled" ] || [ "$ALLOW_CORS" == "1" ]; then
+    if [ "${ALLOW_CORS:-}" == "enabled" ] || [ "${ALLOW_CORS:-}" == "1" ]; then
         echo "export APACHE_ARGUMENTS='-D ALLOW_CORS'" >> /etc/apache2/envvars
     fi
 
@@ -112,7 +114,7 @@ if [ "$1" = "run" ]; then
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
 
     # start cron job to trigger consecutive updates
-    if [ "$UPDATES" = "enabled" ] || [ "$UPDATES" = "1" ]; then
+    if [ "${UPDATES:-}" = "enabled" ] || [ "${UPDATES:-}" = "1" ]; then
       /etc/init.d/cron start
     fi
 
