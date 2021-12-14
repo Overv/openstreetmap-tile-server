@@ -139,7 +139,8 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install python libraries
 RUN pip3 install \
  requests \
- pyyaml
+ pyyaml \
+ osmium
 
 # Configure Apache
 RUN mkdir /var/lib/mod_tile \
