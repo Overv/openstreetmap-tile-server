@@ -62,7 +62,7 @@ if [ "$1" = "import" ]; then
     if [ "${UPDATES:-}" = "enabled" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
         osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
-        osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
+        osmium fileinfo --get=header.option.timestamp /data.osm.pbf > /var/lib/mod_tile/replication_timestamp.txt
         REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
         # initial setup of osmosis workspace (for consecutive updates)
