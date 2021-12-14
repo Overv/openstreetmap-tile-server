@@ -107,9 +107,13 @@ freelock()
 
 if [ $# -eq 1 ] ; then
     m_info "Initialising Osmosis replication system to $1"
-    mkdir $WORKOSM_DIR
+    mkdir -p $WORKOSM_DIR
     $OSMOSIS_BIN --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
-    wget "https://replicate-sequences.osm.mazdermind.de/?"$1"T00:00:00Z" -O $WORKOSM_DIR/state.txt
+
+    init_seq=$(pyosmium-get-changes --server https://planet.openstreetmap.org/replication/minute/ -D $1)
+    url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
+    wget https://planet.openstreetmap.org/replication/minute/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
+
     mv $WORKOSM_DIR/configuration.txt $WORKOSM_DIR/configuration_orig.txt
     sed "s!baseUrl=http://planet.openstreetmap.org/replication/minute!baseUrl=https://planet.openstreetmap.org/replication/minute!" $WORKOSM_DIR/configuration_orig.txt > $WORKOSM_DIR/configuration.txt
 else
@@ -167,12 +171,12 @@ fi
 
 #------------------------------------------------------------------------------
 # The lockfile is normally removed before we expire tiles because that is
-# something thatcan be done in parallel with further processing.  In order to
+# something that can be done in parallel with further processing.  In order to
 # avoid rework, if actually rerendering is done rather than just deleting or
 # dirtying, it makes sense to move it lower down.
 #------------------------------------------------------------------------------
-#    m_ok "Import complete; removing lock file"
-#    freelock "$LOCK_FILE"
+#   m_ok "Import complete; removing lock file"
+#   freelock "$LOCK_FILE"
 
     m_ok "expiring tiles"
 #------------------------------------------------------------------------------
@@ -194,11 +198,8 @@ fi
 # Only remove the lock file after expiry (if system is slow we want to delay
 # the next import, not have multiple render_expired processes running)
 #------------------------------------------------------------------------------
-   freelock "$LOCK_FILE"
+    freelock "$LOCK_FILE"
 
     m_ok "Done with import"
-
-
-
 
 fi
