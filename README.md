@@ -32,6 +32,7 @@ docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     overv/openstreetmap-tile-server \
     import
 ```
