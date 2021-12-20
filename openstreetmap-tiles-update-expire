@@ -30,7 +30,6 @@ OSM2PGSQL_OPTIONS="-d $DBNAME -G --hstore --tag-transform-script /home/renderer/
 #------------------------------------------------------------------------------
 TRIM_POLY_FILE="/var/lib/mod_tile/data.poly"
 TRIM_OPTIONS="-d $DBNAME"
-#TRIM_REGION_OPTIONS="-b -14.17 48.85 2.12 61.27"
 TRIM_REGION_OPTIONS="-p $TRIM_POLY_FILE"
 
 BASE_DIR=/var/lib/mod_tile
@@ -116,7 +115,7 @@ if [ $# -eq 1 ] ; then
 
         cat > /var/lib/mod_tile/.osmosis/configuration.txt <<- EOM
 baseURL=$REPLICATION_URL
-maxInterval=86400
+maxInterval=$MAX_INTERVAL_SECONDS
 EOM
 
 else
