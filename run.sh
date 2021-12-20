@@ -67,6 +67,7 @@ if [ "$1" = "import" ]; then
 
         # initial setup of osmosis workspace (for consecutive updates)
         sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+
     fi
 
     # copy polygon file if available
