@@ -107,7 +107,7 @@ freelock()
 if [ $# -eq 1 ] ; then
     m_info "Initialising Osmosis replication system to $1"
     mkdir -p $WORKOSM_DIR
-    $OSMOSIS_BIN --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
+    $OSMOSIS_BIN -v --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
 
     init_seq=$(pyosmium-get-changes --server $REPLICATION_URL -D $1)
     url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
@@ -148,7 +148,7 @@ fi
     /bin/cp $WORKOSM_DIR/state.txt $WORKOSM_DIR/last.state.txt
     m_ok "downloading diff"
 
-    if ! $OSMOSIS_BIN --read-replication-interval workingDirectory=$WORKOSM_DIR --simplify-change --write-xml-change $CHANGE_FILE 1>&2 2> "$OSMOSISLOG"; then
+    if ! $OSMOSIS_BIN -v --read-replication-interval workingDirectory=$WORKOSM_DIR --simplify-change --write-xml-change $CHANGE_FILE 1>&2 2> "$OSMOSISLOG"; then
         m_error "Osmosis error"
     fi
 
