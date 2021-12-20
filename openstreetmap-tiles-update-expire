@@ -59,6 +59,10 @@ EXPIRY_TOUCHFROM=13
 EXPIRY_DELETEFROM=19
 EXPIRY_MAXZOOM=20
 
+
+REPLICATION_URL=${REPLICATION_URL:="https://planet.openstreetmap.org/replication/hour/"}
+MAX_INTERVAL_SECONDS=${MAX_INTERVAL_SECONDS:="3600"}
+
 #*************************************************************************
 #*************************************************************************
 
