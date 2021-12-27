@@ -195,11 +195,85 @@ docker run \
     -v openstreetmap-nodes:/nodes \
     -v openstreetmap-data:/var/lib/postgresql/13/main \
     -e "OSM2PGSQL_EXTRA_ARGS=--flat-nodes /nodes/flat_nodes.bin" \
-    overv/openstreetmap-tile-server \
+    -d overv/openstreetmap-tile-server \
     import
 ```
 
 >Note that if you use a folder other than `/nodes` then you must make sure that you manually set the owner to `renderer`!
+
+### OSM Planet
+
+If you plan to import the entire planet, adapt the parameters to the characteristics of your server X and Y where X corresponds respectively to 3/4 of the max threads and Y to 3/4 of the available memory expressed in Mb.
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \  
+    -e UPDATES=enabled \
+    -v /absolute/path/to/planet-latest:/data.osm.pbf \
+    -v openstreetmap-nodes:/nodes \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -e AUTOVACUUM=off \
+    -e THREADS=X
+    -e "OSM2PGSQL_EXTRA_ARGS=-C Y --flat-nodes /nodes/flat_nodes.bin " \
+    -d overv/openstreetmap-tile-server \
+    import
+```
+
+For a machine with 24 cores and 40 Gb of available memory, the instructions adapt as follows:
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \   
+    -e UPDATES=enabled \
+    -v /absolute/path/to/planet-latest:/data.osm.pbf \
+    -v openstreetmap-nodes:/nodes \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -e AUTOVACUUM=off \
+    -e THREADS=18
+    -e "OSM2PGSQL_EXTRA_ARGS=-C 30720 --flat-nodes /nodes/flat_nodes.bin " \
+    overv/openstreetmap-tile-server \
+    import
+```
+
+For the running consider following instructions:
+
+```
+docker run \
+    -p 8080:80 \
+    -p 5432:5432 \   
+    -e UPDATES=enabled \
+    -e AUTOVACUUM=on \
+    -e THREADS=6 \
+    -e ALLOW_CORS=enabled \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    --shm-size="512m" \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
+### Upgrade from a previous version
+
+The update assumes that you have previously installed version 1.7.0 or earlier on your server. You must stop the docker container and perform the two update steps which consists of upgrading the database from postgresql 12 to postgresql 13 using the upgrade.sh script and then upgrading the software stack using the command line given below.
+
+```
+sh upgrade.sh
+
+docker run \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -d overv/openstreetmap-tile-server \
+    upgrade
+```
+
+The use of upgrade.sh script on the entire planet requires a storage space of 4Tb to store the database dump during the migration and very long if you use the upgrade script. We advise you in case of carrying out a fast import from a complete dump of the database.
+
+```
+docker run \
+    -v openstreetmap-data:/var/lib/postgresql/13/main \
+    -d overv/openstreetmap-tile-server \
+    planet
+```
 
 ### Benchmarks
 
