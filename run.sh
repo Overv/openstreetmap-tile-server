@@ -92,6 +92,75 @@ if [ "$1" = "import" ]; then
     exit 0
 fi
 
+if [ "$1" = "planet" ]; then
+    # Ensure that database directory is in right state
+    chown postgres:postgres -R /var/lib/postgresql
+    if [ ! -f /var/lib/postgresql/13/main/PG_VERSION ]; then
+        sudo -u postgres /usr/lib/postgresql/13/bin/pg_ctl -D /var/lib/postgresql/13/main/ initdb -o "--locale C.UTF-8"
+    fi
+
+    # Initialize PostgreSQL
+    createPostgresConfig
+    service postgresql start
+    sudo -u postgres createuser renderer
+    sudo -u postgres createdb -E UTF8 -O renderer gis
+    sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
+    sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
+    sudo -u postgres psql -d gis -c "ALTER SYSTEM SET work_mem='16MB';"
+    sudo -u postgres psql -d gis -c "ALTER SYSTEM SET maintenance_work_mem='256MB';"
+    sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
+    sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    setPostgresPassword
+
+    DOWNLOAD_DUMP="https://osm.ig.umons.ac.be/dump.sql"
+    wget "$WGET_ARGS" "$DOWNLOAD_DUMP" -O /osm.sql
+
+    if [ "$UPDATES" = "enabled" ]; then
+        # determine and set osmosis_replication_timestamp (for consecutive updates)
+        osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
+        osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
+        REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
+
+        # initial setup of osmosis workspace (for consecutive updates)
+        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+    fi
+
+    # Import data
+    sudo -u postgres psql -d gis < osm.sql
+    
+    #Import external data
+    sudo chown -R renderer: /home/renderer/src
+    sudo -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data
+
+    # Register that data has changed for mod_tile caching purposes
+    touch /var/lib/mod_tile/planet-import-complete
+
+    service postgresql stop
+
+    exit 0
+fi
+
+if [ "$1" = "upgrade" ]; then
+
+    # Ensure that database directory is in right state
+    chown postgres:postgres -R /var/lib/postgresql
+    if [ ! -f /var/lib/postgresql/13/main/PG_VERSION ]; then
+        sudo -u postgres /usr/lib/postgresql/13/bin/pg_ctl -D /var/lib/postgresql/13/main/ initdb -o "--locale C.UTF-8"
+    fi
+
+    # Initialize PostgreSQL
+    createPostgresConfig
+    service postgresql start
+
+    # Upgrade PostGIS  
+    sudo -u postgres psql -d gis -c "SELECT PostGIS_Extensions_Upgrade();"
+    
+    service postgresql stop
+
+    exit 0
+
+fi
+
 if [ "$1" = "run" ]; then
     # Clean /tmp
     rm -rf /tmp/*
