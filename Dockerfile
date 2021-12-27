@@ -15,18 +15,18 @@ RUN apt-get update \
 
 FROM compiler-common AS compiler-postgis
 RUN apt-get install -y --no-install-recommends \
- postgresql-server-dev-12 \
+ postgresql-server-dev-14 \
  libxml2-dev \
  libgeos-dev \
  libproj-dev
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.2.0.tar.gz -O postgis.tar.gz \
 && mkdir -p postgis_src \
 && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
 && rm postgis.tar.gz \
 && cd postgis_src \
 && ./configure --without-protobuf --without-raster \
 && make -j $(nproc) \
-&& checkinstall --pkgversion="3.1.1" --install=no --default make install
+&& checkinstall --pkgversion="3.2.0" --install=no --default make install
 
 ###########################################################################################################
 
@@ -78,7 +78,7 @@ FROM compiler-common AS compiler-stylesheet
 RUN apt-get install -y --no-install-recommends \
  npm
 RUN cd ~ \
-&& git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+&& git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
 && cd openstreetmap-carto \
 && sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
 && npm install -g carto@0.18.2 \
@@ -177,9 +177,9 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 FROM final-base AS final
 
 # Install PostGIS
-COPY --from=compiler-postgis postgis_src/postgis-src_3.1.1-1_amd64.deb .
-RUN dpkg -i postgis-src_3.1.1-1_amd64.deb \
-&& rm postgis-src_3.1.1-1_amd64.deb
+COPY --from=compiler-postgis postgis_src/postgis-src_3.2.0-1_amd64.deb .
+RUN dpkg -i postgis-src_3.2.0-1_amd64.deb \
+&& rm postgis-src_3.2.0-1_amd64.deb
 
 # Install osm2pgsql
 COPY --from=compiler-osm2pgsql /root/osm2pgsql/build/build_1-1_amd64.deb .
