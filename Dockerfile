@@ -199,6 +199,7 @@ COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
 RUN dpkg -i mod-tile_1-1_amd64.deb \
  && ldconfig \
  && rm mod-tile_1-1_amd64.deb
+COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
 # Install stylesheet
 COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
