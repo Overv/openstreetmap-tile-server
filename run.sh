@@ -12,6 +12,17 @@ function setPostgresPassword() {
     sudo -u postgres psql -c "ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
 }
 
+function fix_perm() {
+    # podman volume does not give new volumes
+    # permissions that match the original parmissions.
+    # correct this here
+
+    #chown postgres.postgres /var/lib/postgresql/12/main
+    #chown renderer.root /var/lib/mod_tile
+    chmod 750 /var/lib/postgresql/12/main
+    chmod 755 /var/lib/mod_tile
+}
+
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
@@ -24,6 +35,12 @@ if [ "$#" -ne 1 ]; then
 fi
 
 set -x
+
+if [ "$1" = "fix_perm" ]; then
+    # this must be done before import
+    fix_perm
+    exit 0
+fi
 
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
