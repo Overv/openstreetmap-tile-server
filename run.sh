@@ -4,12 +4,13 @@ set -euo pipefail
 
 function createPostgresConfig() {
   cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
-  sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
+  su - postgres -c "echo autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
   cat /etc/postgresql/12/main/conf.d/postgresql.custom.conf
 }
 
 function setPostgresPassword() {
-    sudo -u postgres psql -c "ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
+    SQL_CMD="ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
+    su - postgres -c "psql -c \"$SQL_CMD\""
 }
 
 if [ "$#" -ne 1 ]; then
@@ -29,18 +30,18 @@ if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
     chown postgres:postgres -R /var/lib/postgresql
     if [ ! -f /var/lib/postgresql/12/main/PG_VERSION ]; then
-        sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main/ initdb -o "--locale C.UTF-8"
+        su - postgres -c '/usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main/ initdb -o "--locale C.UTF-8"'
     fi
 
     # Initialize PostgreSQL
     createPostgresConfig
     service postgresql start
-    sudo -u postgres createuser renderer
-    sudo -u postgres createdb -E UTF8 -O renderer gis
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
-    sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
-    sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
-    sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    su - postgres -c 'createuser renderer'
+    su - postgres -c 'createdb -E UTF8 -O renderer gis'
+    su - postgres -c 'psql -d gis -c "CREATE EXTENSION postgis;"'
+    su - postgres -c 'psql -d gis -c "CREATE EXTENSION hstore;"'
+    su - postgres -c 'psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"'
+    su - postgres -c 'psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"'
     setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
@@ -66,23 +67,25 @@ if [ "$1" = "import" ]; then
         REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
         # initial setup of osmosis workspace (for consecutive updates)
-        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+        su - renderer -c "openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP"
     fi
 
     # copy polygon file if available
     if [ -f /data.poly ]; then
-        sudo -u renderer cp /data.poly /var/lib/mod_tile/data.poly
+        su - renderer -c 'cp /data.poly /var/lib/mod_tile/data.poly'
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
+    su - renderer -c "osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}"
 
     # Create indexes
-    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
+    su - postgres -c 'psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql'
 
     #Import external data
     chown -R renderer: /home/renderer/src
-    sudo -E -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data
+
+    # preserve env (no su -)
+    su renderer -c 'python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data'
 
     # Register that data has changed for mod_tile caching purposes
     touch /var/lib/mod_tile/planet-import-complete
@@ -124,7 +127,7 @@ if [ "$1" = "run" ]; then
     }
     trap stop_handler SIGTERM
 
-    sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf &
+    su - renderer -c "renderd -f -c /usr/local/etc/renderd.conf" &
     child=$!
     wait "$child"
 
