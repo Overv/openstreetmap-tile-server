@@ -257,6 +257,8 @@ docker run \
 
 The update assumes that you have previously installed version 1.7.0 or earlier on your server. You must stop the docker container and perform the two update steps which consists of upgrading the database from postgresql 12 to postgresql 13 using the upgrade.sh script and then upgrading the software stack using the command line given below.
 
+WARNING: We recommend that you never install the latest version of PostgreSQL but limit yourself to the previous branch to avoid incompatibility problems.
+
 ```
 sh upgrade.sh
 
