@@ -74,28 +74,11 @@ RUN cd ~ \
 
 ###########################################################################################################
 
-FROM compiler-common AS compiler-stylesheet
-
-ARG STYLE_REPO="https://github.com/gravitystorm/openstreetmap-carto.git"
-ARG STYLE_BRANCH="v5.3.1"
-
-RUN apt-get install -y --no-install-recommends \
- npm
-RUN cd ~ \
-&& git clone --single-branch --branch ${STYLE_BRANCH} ${STYLE_REPO} --depth 1 \
-&& cd openstreetmap-carto \
-&& sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
-&& npm install -g carto@0.18.2 \
-&& carto project.mml > mapnik.xml
-
-###########################################################################################################
-
 FROM compiler-common AS compiler-helper-script
 RUN mkdir -p /home/renderer/src \
 && cd /home/renderer/src \
 && git clone https://github.com/zverik/regional \
 && cd regional \
-&& git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
 && rm -rf .git \
 && chmod u+x /home/renderer/src/regional/trim_osc.py
 
@@ -119,9 +102,11 @@ RUN apt-get update \
  fonts-noto-hinted \
  fonts-noto-unhinted \
  gdal-bin \
+ git-core \
  liblua5.3-dev \
  lua5.3 \
  mapnik-utils \
+ npm \
  osmium-tool \
  osmosis \
  postgresql-12 \
@@ -144,6 +129,9 @@ RUN adduser --disabled-password --gecos "" renderer
 RUN pip3 install \
  requests \
  pyyaml
+ 
+# Install carto for stylesheet
+RUN npm install -g carto@0.18.2
 
 # Configure Apache
 RUN mkdir /var/lib/mod_tile \
