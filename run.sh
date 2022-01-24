@@ -25,6 +25,19 @@ fi
 
 set -x
 
+if [ ! "$(ls -A /home/renderer/src/openstreetmap-carto)" ]; then
+
+    git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 /home/renderer/src/openstreetmap-carto
+
+fi
+
+if [ ! -f /home/renderer/src/openstreetmap-carto/mapnik.xml ]; then
+
+    cd /home/renderer/src/openstreetmap-carto
+    carto *.mml > mapnik.xml
+
+fi
+
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
     chown postgres:postgres -R /var/lib/postgresql
@@ -75,13 +88,14 @@ if [ "$1" = "import" ]; then
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/*.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/*.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
 
     # Create indexes
-    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
+    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/*.sql
 
     #Import external data
     sudo chown -R renderer: /home/renderer/src
+
     sudo -E -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data
 
     # Register that data has changed for mod_tile caching purposes

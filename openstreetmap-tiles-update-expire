@@ -20,7 +20,7 @@ OSM2PGSQL_BIN=osm2pgsql
 TRIM_BIN=/home/$ACCOUNT/src/regional/trim_osc.py
 
 DBNAME=gis
-OSM2PGSQL_OPTIONS="-d $DBNAME -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style ${OSM2PGSQL_EXTRA_ARGS}"
+OSM2PGSQL_OPTIONS="-d $DBNAME -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/*.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/*.style ${OSM2PGSQL_EXTRA_ARGS}"
 
 #------------------------------------------------------------------------------
 # When using trim_osc.py we can define either a bounding box (such as this
@@ -194,11 +194,9 @@ fi
 # Only remove the lock file after expiry (if system is slow we want to delay
 # the next import, not have multiple render_expired processes running)
 #------------------------------------------------------------------------------
-   freelock "$LOCK_FILE"
+    freelock "$LOCK_FILE"
 
     m_ok "Done with import"
-
-
 
 
 fi

@@ -189,12 +189,11 @@ RUN dpkg -i renderd_1-1_amd64.deb \
 # Install mod_tile
 COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
 RUN dpkg -i mod-tile_1-1_amd64.deb \
+ && mkdir -p /home/renderer/src/openstreetmap-carto \
  && ldconfig \
  && rm mod-tile_1-1_amd64.deb
-COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
-# Install stylesheet
-COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
+COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
