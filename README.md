@@ -54,6 +54,22 @@ docker run \
     import
 ```
 
+### Using an alternate style
+
+By default the container will fetch openstreetmap-carto if it is not specified. However, you can modify the style at run-time. Be aware you need the style mounted at import as the Lua script needs to be run. The logic lookisn for wilcards in the style directory, so having the same names is not critical:
+
+```
+docker run \
+    -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
+    -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
+    -v /home/user/openstreetmap-caro-modified:/home/renderer/src/openstreetmap-carto \
+    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    overv/openstreetmap-tile-server \
+    import
+```
+
+Be sure to mount the volume during `run` with the same `-v /home/user/openstreetmap-caro-modified:/home/renderer/src/openstreetmap-carto`
+
 ## Running the server
 
 Run the server like this:
