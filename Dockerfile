@@ -139,7 +139,8 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install python libraries
 RUN pip3 install \
  requests \
- pyyaml
+ pyyaml \
+ osmium
 
 # Configure Apache
 RUN mkdir /var/lib/mod_tile \
@@ -160,6 +161,8 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
 && mkdir /var/log/tiles \
 && chmod a+rw /var/log/tiles \
 && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
+&& echo "SHELL=/bin/bash" > /etc/crontab \
+&& echo "BASH_ENV=/container.env" >> /etc/crontab \
 && echo "* * * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
 
 RUN mkdir /nodes \

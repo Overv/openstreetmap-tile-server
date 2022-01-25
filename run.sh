@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /container.env
+
 function createPostgresConfig() {
   cp /etc/postgresql/12/main/postgresql.custom.conf.tmpl /etc/postgresql/12/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/12/main/conf.d/postgresql.custom.conf
@@ -62,11 +64,12 @@ if [ "$1" = "import" ]; then
     if [ "${UPDATES:-}" = "enabled" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
         osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
-        osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
+        osmium fileinfo --get=header.option.timestamp /data.osm.pbf > /var/lib/mod_tile/replication_timestamp.txt
         REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
         # initial setup of osmosis workspace (for consecutive updates)
-        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+        sudo -E -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+
     fi
 
     # copy polygon file if available
