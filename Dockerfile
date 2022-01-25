@@ -128,7 +128,7 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install python libraries
 RUN pip3 install \
  requests \
- osmium
+ osmium \
  pyyaml
  
 # Install carto for stylesheet
