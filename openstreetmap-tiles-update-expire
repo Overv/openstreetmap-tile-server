@@ -30,7 +30,6 @@ OSM2PGSQL_OPTIONS="-d $DBNAME -G --hstore --tag-transform-script /home/renderer/
 #------------------------------------------------------------------------------
 TRIM_POLY_FILE="/var/lib/mod_tile/data.poly"
 TRIM_OPTIONS="-d $DBNAME"
-#TRIM_REGION_OPTIONS="-b -14.17 48.85 2.12 61.27"
 TRIM_REGION_OPTIONS="-p $TRIM_POLY_FILE"
 
 BASE_DIR=/var/lib/mod_tile
@@ -59,6 +58,10 @@ EXPIRY_MINZOOM=13
 EXPIRY_TOUCHFROM=13
 EXPIRY_DELETEFROM=19
 EXPIRY_MAXZOOM=20
+
+
+REPLICATION_URL=${REPLICATION_URL:="https://planet.openstreetmap.org/replication/hour/"}
+MAX_INTERVAL_SECONDS=${MAX_INTERVAL_SECONDS:="3600"}
 
 #*************************************************************************
 #*************************************************************************
@@ -107,11 +110,18 @@ freelock()
 
 if [ $# -eq 1 ] ; then
     m_info "Initialising Osmosis replication system to $1"
-    mkdir $WORKOSM_DIR
-    $OSMOSIS_BIN --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
-    wget "https://replicate-sequences.osm.mazdermind.de/?"$1"T00:00:00Z" -O $WORKOSM_DIR/state.txt
-    mv $WORKOSM_DIR/configuration.txt $WORKOSM_DIR/configuration_orig.txt
-    sed "s!baseUrl=http://planet.openstreetmap.org/replication/minute!baseUrl=https://planet.openstreetmap.org/replication/minute!" $WORKOSM_DIR/configuration_orig.txt > $WORKOSM_DIR/configuration.txt
+    mkdir -p $WORKOSM_DIR
+    $OSMOSIS_BIN -v 5 --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
+
+    init_seq=$(pyosmium-get-changes --server $REPLICATION_URL -D $1)
+    url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
+    wget $REPLICATION_URL/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
+
+        cat > /var/lib/mod_tile/.osmosis/configuration.txt <<- EOM
+baseUrl=$REPLICATION_URL
+maxInterval=$MAX_INTERVAL_SECONDS
+EOM
+
 else
 # make sure the lockfile is removed when we exit and then claim it
 
@@ -142,7 +152,7 @@ fi
     /bin/cp $WORKOSM_DIR/state.txt $WORKOSM_DIR/last.state.txt
     m_ok "downloading diff"
 
-    if ! $OSMOSIS_BIN --read-replication-interval workingDirectory=$WORKOSM_DIR --simplify-change --write-xml-change $CHANGE_FILE 1>&2 2> "$OSMOSISLOG"; then
+    if ! $OSMOSIS_BIN -v 5 --read-replication-interval workingDirectory=$WORKOSM_DIR --simplify-change --write-xml-change $CHANGE_FILE 1>&2 2> "$OSMOSISLOG"; then
         m_error "Osmosis error"
     fi
 
@@ -167,12 +177,12 @@ fi
 
 #------------------------------------------------------------------------------
 # The lockfile is normally removed before we expire tiles because that is
-# something thatcan be done in parallel with further processing.  In order to
+# something that can be done in parallel with further processing.  In order to
 # avoid rework, if actually rerendering is done rather than just deleting or
 # dirtying, it makes sense to move it lower down.
 #------------------------------------------------------------------------------
-#    m_ok "Import complete; removing lock file"
-#    freelock "$LOCK_FILE"
+#   m_ok "Import complete; removing lock file"
+#   freelock "$LOCK_FILE"
 
     m_ok "expiring tiles"
 #------------------------------------------------------------------------------
@@ -197,6 +207,5 @@ fi
     freelock "$LOCK_FILE"
 
     m_ok "Done with import"
-
 
 fi
