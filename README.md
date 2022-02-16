@@ -62,6 +62,10 @@ By default the container will fetch openstreetmap-carto if it is not specified. 
 docker run \
     -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
     -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
+    -e NAME_LUA=sample.lua
+    -e NAME_STYLE=test.style
+    -e NAME_MML=project.mml
+    -e NAME_SQL=test.sql
     -v /home/user/openstreetmap-caro-modified:/home/renderer/src/openstreetmap-carto \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     overv/openstreetmap-tile-server \
