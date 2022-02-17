@@ -10,20 +10,21 @@ RUN apt-get update \
  make \
  tar \
  wget \
- ca-certificates
+ ca-certificates \
+&& apt-get update
 
 ###########################################################################################################
 
 FROM compiler-common AS compiler-postgis
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
 && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-&& apt-get update \ 
+&& apt-get update \
 && apt-get install -y --no-install-recommends \
  postgresql-server-dev-14 \
  libxml2-dev \
  libgeos-dev \
- libproj-dev
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.2.1.tar.gz -O postgis.tar.gz \
+ libproj-dev \
+&& wget https://download.osgeo.org/postgis/source/postgis-3.2.1.tar.gz -O postgis.tar.gz \
 && mkdir -p postgis_src \
 && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
 && rm postgis.tar.gz \
@@ -82,7 +83,7 @@ FROM compiler-common AS compiler-stylesheet
 RUN apt-get install -y --no-install-recommends \
  npm
 RUN cd ~ \
-&& git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+&& git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
 && cd openstreetmap-carto \
 && sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
 && npm install -g carto@0.18.2 \
@@ -118,13 +119,13 @@ RUN apt-get update \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \
+ gnupg2 \
  gdal-bin \
  liblua5.3-dev \
  lua5.3 \
  mapnik-utils \
  osmium-tool \
  osmosis \
- postgresql-14 \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -134,6 +135,10 @@ RUN apt-get update \
  sudo \
  ttf-unifont \
  wget \
+&& echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+&& apt-get update \
+&& apt-get install -y --no-install-recommends postgresql-14 \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
