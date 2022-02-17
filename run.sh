@@ -85,8 +85,7 @@ if [ "$1" = "import" ]; then
         REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
 
         # initial setup of osmosis workspace (for consecutive updates)
-        sudo -E -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
-
+        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
     fi
 
     # copy polygon file if available

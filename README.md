@@ -29,8 +29,6 @@ If your import is an extract of the planet and has polygonal bounds associated w
 ```
 docker run \
     -e UPDATES=enabled \
-    -e REPLICATION_URL=https://planet.openstreetmap.org/replication/minute/ \
-    -e MAX_INTERVAL_SECONDS=60 \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
@@ -115,8 +113,6 @@ Given that you've set up your import as described in the *Automatic updates* sec
 ```
 docker run \
     -p 8080:80 \
-    -e REPLICATION_URL=https://planet.openstreetmap.org/replication/minute/ \
-    -e MAX_INTERVAL_SECONDS=60 \
     -e UPDATES=enabled \
     -v openstreetmap-data:/var/lib/postgresql/12/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \

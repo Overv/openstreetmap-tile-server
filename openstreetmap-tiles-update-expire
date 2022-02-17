@@ -113,15 +113,12 @@ if [ $# -eq 1 ] ; then
     mkdir -p $WORKOSM_DIR
     $OSMOSIS_BIN -v 5 --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
 
-    init_seq=$(pyosmium-get-changes --server $REPLICATION_URL -D $1)
+    init_seq=$(pyosmium-get-changes --server https://planet.openstreetmap.org/replication/minute/ -D $1)
     url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
-    wget $REPLICATION_URL/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
+    wget https://planet.openstreetmap.org/replication/minute/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
 
-        cat > /var/lib/mod_tile/.osmosis/configuration.txt <<- EOM
-baseUrl=$REPLICATION_URL
-maxInterval=$MAX_INTERVAL_SECONDS
-EOM
-
+    mv $WORKOSM_DIR/configuration.txt $WORKOSM_DIR/configuration_orig.txt
+    sed "s!baseUrl=http://planet.openstreetmap.org/replication/minute!baseUrl=https://planet.openstreetmap.org/replication/minute!" $WORKOSM_DIR/configuration_orig.txt > $WORKOSM_DIR/configuration.txt
 else
 # make sure the lockfile is removed when we exit and then claim it
 
