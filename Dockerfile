@@ -6,6 +6,7 @@ RUN apt-get update \
  git-core \
  checkinstall \
  g++ \
+ gnupg2 \
  make \
  tar \
  wget \
@@ -14,8 +15,11 @@ RUN apt-get update \
 ###########################################################################################################
 
 FROM compiler-common AS compiler-postgis
-RUN apt-get install -y --no-install-recommends \
- postgresql-server-dev-12 \
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+&& apt-get update \ 
+&& apt-get install -y --no-install-recommends \
+ postgresql-server-dev-14 \
  libxml2-dev \
  libgeos-dev \
  libproj-dev
@@ -120,7 +124,7 @@ RUN apt-get update \
  mapnik-utils \
  osmium-tool \
  osmosis \
- postgresql-12 \
+ postgresql-14 \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -166,11 +170,11 @@ RUN mkdir /nodes \
 && chown renderer:renderer /nodes
 
 # Configure PosgtreSQL
-COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
+COPY postgresql.custom.conf.tmpl /etc/postgresql/14/main/
 RUN chown -R postgres:postgres /var/lib/postgresql \
-&& chown postgres:postgres /etc/postgresql/12/main/postgresql.custom.conf.tmpl \
-&& echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
-&& echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+&& chown postgres:postgres /etc/postgresql/14/main/postgresql.custom.conf.tmpl \
+&& echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf \
+&& echo "host all all ::/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
 ###########################################################################################################
 
