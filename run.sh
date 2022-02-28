@@ -31,7 +31,7 @@ set -x
 
 if [ ! -d /home/renderer/src/openstreetmap-carto ]; then
 
-    git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 /home/renderer/src/openstreetmap-carto
+    mv /home/renderer/src/openstreetmap-carto-backup /home/renderer/src/openstreetmap-carto
 
 fi
 
