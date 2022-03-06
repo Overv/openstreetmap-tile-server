@@ -22,6 +22,10 @@ docker run \
 
 If the container exits without errors, then your data has been successfully imported and you are now ready to run the tile server.
 
+Note that the import process requires an internet connection.  The run process does not require an internet connection.  If you want to run the openstreetmap-tile server on a compter that is isolated, you must first import on an internet connected computer, export the openstreetmap-data volume as a tarfile, and then restore the data volume on the target computer system.
+
+Also when running on an isolated system, the default index.html from the container will not work, as it requires access to the web for the leaflet packages. 
+
 ### Automatic updates (optional)
 
 If your import is an extract of the planet and has polygonal bounds associated with it, like those from geofabrik.de, then it is possible to set your server up for automatic updates. Make sure to reference both the OSM file and the polygon file during the import process to facilitate this, and also include the `UPDATES=enabled` variable:
