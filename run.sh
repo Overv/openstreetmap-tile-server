@@ -29,9 +29,9 @@ fi
 
 set -x
 
-if [ ! -d /home/renderer/src/openstreetmap-carto ]; then
+if [ ! "$(ls -A /home/renderer/src/openstreetmap-carto)" ]; then
 
-    mv /home/renderer/src/openstreetmap-carto-backup /home/renderer/src/openstreetmap-carto
+    mv /home/renderer/src/openstreetmap-carto-backup/* /home/renderer/src/openstreetmap-carto/
 
 fi
 

@@ -206,7 +206,7 @@ COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/o
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
-COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/openstreetmap-carto-backup
+COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
 
 # Start running
 COPY run.sh /
