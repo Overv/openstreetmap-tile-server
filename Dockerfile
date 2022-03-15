@@ -74,6 +74,14 @@ RUN cd ~ \
 
 ###########################################################################################################
 
+FROM compiler-common AS compiler-stylesheet
+RUN cd ~ \
+&& git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+&& cd openstreetmap-carto \
+&& rm -rf .git
+
+###########################################################################################################
+
 FROM compiler-common AS compiler-helper-script
 RUN mkdir -p /home/renderer/src \
 && cd /home/renderer/src \
@@ -102,7 +110,6 @@ RUN apt-get update \
  fonts-noto-hinted \
  fonts-noto-unhinted \
  gdal-bin \
- git-core \
  liblua5.3-dev \
  lua5.3 \
  mapnik-utils \
@@ -199,7 +206,7 @@ COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/o
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
-RUN git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 /home/renderer/src/openstreetmap-carto-backup
+COPY --from=compiler-stylesheet /home/renderer/openstreetmap-carto /home/renderer/openstreetmap-carto-backup
 
 # Start running
 COPY run.sh /
