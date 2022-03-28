@@ -6,27 +6,32 @@ RUN apt-get update \
  git-core \
  checkinstall \
  g++ \
+ gnupg2 \
  make \
  tar \
  wget \
- ca-certificates
+ ca-certificates \
+&& apt-get update
 
 ###########################################################################################################
 
 FROM compiler-common AS compiler-postgis
-RUN apt-get install -y --no-install-recommends \
- postgresql-server-dev-12 \
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+&& apt-get update \
+&& apt-get install -y --no-install-recommends \
+ postgresql-server-dev-14 \
  libxml2-dev \
  libgeos-dev \
- libproj-dev
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.1.1.tar.gz -O postgis.tar.gz \
+ libproj-dev \
+&& wget https://download.osgeo.org/postgis/source/postgis-3.2.1.tar.gz -O postgis.tar.gz \
 && mkdir -p postgis_src \
 && tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
 && rm postgis.tar.gz \
 && cd postgis_src \
 && ./configure --without-protobuf --without-raster \
 && make -j $(nproc) \
-&& checkinstall --pkgversion="3.1.1" --install=no --default make install
+&& checkinstall --pkgversion="3.2.1" --install=no --default make install
 
 ###########################################################################################################
 
@@ -76,7 +81,7 @@ RUN cd ~ \
 
 FROM compiler-common AS compiler-stylesheet
 RUN cd ~ \
-&& git clone --single-branch --branch v5.3.1 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
+&& git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
 && cd openstreetmap-carto \
 && rm -rf .git
 
@@ -109,6 +114,7 @@ RUN apt-get update \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \
+ gnupg2 \
  gdal-bin \
  liblua5.3-dev \
  lua5.3 \
@@ -116,7 +122,6 @@ RUN apt-get update \
  npm \
  osmium-tool \
  osmosis \
- postgresql-12 \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -126,6 +131,10 @@ RUN apt-get update \
  sudo \
  ttf-unifont \
  wget \
+&& echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+&& apt-get update \
+&& apt-get install -y --no-install-recommends postgresql-14 \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
@@ -166,20 +175,20 @@ RUN mkdir /nodes \
 && chown renderer:renderer /nodes
 
 # Configure PosgtreSQL
-COPY postgresql.custom.conf.tmpl /etc/postgresql/12/main/
+COPY postgresql.custom.conf.tmpl /etc/postgresql/14/main/
 RUN chown -R postgres:postgres /var/lib/postgresql \
-&& chown postgres:postgres /etc/postgresql/12/main/postgresql.custom.conf.tmpl \
-&& echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/12/main/pg_hba.conf \
-&& echo "host all all ::/0 md5" >> /etc/postgresql/12/main/pg_hba.conf
+&& chown postgres:postgres /etc/postgresql/14/main/postgresql.custom.conf.tmpl \
+&& echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf \
+&& echo "host all all ::/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
 ###########################################################################################################
 
 FROM final-base AS final
 
 # Install PostGIS
-COPY --from=compiler-postgis postgis_src/postgis-src_3.1.1-1_amd64.deb .
-RUN dpkg -i postgis-src_3.1.1-1_amd64.deb \
-&& rm postgis-src_3.1.1-1_amd64.deb
+COPY --from=compiler-postgis postgis_src/postgis-src_3.2.1-1_amd64.deb .
+RUN dpkg -i postgis-src_3.2.1-1_amd64.deb \
+&& rm postgis-src_3.2.1-1_amd64.deb
 
 # Install osm2pgsql
 COPY --from=compiler-osm2pgsql /root/osm2pgsql/build/build_1-1_amd64.deb .
