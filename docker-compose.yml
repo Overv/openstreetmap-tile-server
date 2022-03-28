@@ -4,7 +4,7 @@ services:
   map:
     image: overv/openstreetmap-tile-server
     volumes:
-      - openstreetmap-data:/var/lib/postgresql/12/main
+      - openstreetmap-data:/var/lib/postgresql/14/main
     ports:
       - "8080:80"
     command: "run"

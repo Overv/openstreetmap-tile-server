@@ -15,7 +15,7 @@ Next, download an .osm.pbf extract from geofabrik.de for the region that you're 
 ```
 docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     overv/openstreetmap-tile-server \
     import
 ```
@@ -35,7 +35,7 @@ docker run \
     -e UPDATES=enabled \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     overv/openstreetmap-tile-server \
     import
 ```
@@ -50,7 +50,7 @@ It is also possible to let the container download files for you rather than moun
 docker run \
     -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
     -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     overv/openstreetmap-tile-server \
     import
 ```
@@ -62,7 +62,7 @@ Run the server like this:
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -81,7 +81,7 @@ Tiles that have already been rendered will be stored in `/var/lib/mod_tile`. To 
 docker volume create openstreetmap-rendered-tiles
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     -d overv/openstreetmap-tile-server \
     run
@@ -97,7 +97,7 @@ Given that you've set up your import as described in the *Automatic updates* sec
 docker run \
     -p 8080:80 \
     -e UPDATES=enabled \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     -d overv/openstreetmap-tile-server \
     run
@@ -112,7 +112,7 @@ To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles 
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -e ALLOW_CORS=enabled \
     -d overv/openstreetmap-tile-server \
     run
@@ -126,7 +126,7 @@ To connect to the PostgreSQL database inside the container, make sure to expose 
 docker run \
     -p 8080:80 \
     -p 5432:5432 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -144,7 +144,7 @@ docker run \
     -p 8080:80 \
     -p 5432:5432 \
     -e PGPASSWORD=secret \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -160,7 +160,7 @@ The import and tile serving processes use 4 threads by default, but this number 
 docker run \
     -p 8080:80 \
     -e THREADS=24 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -172,7 +172,7 @@ The import and tile serving processes use 800 MB RAM cache by default, but this 
 docker run \
     -p 8080:80 \
     -e "OSM2PGSQL_EXTRA_ARGS=-C 4096" \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -184,7 +184,7 @@ The database use the autovacuum feature by default. This behavior can be changed
 docker run \
     -p 8080:80 \
     -e AUTOVACUUM=off \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -197,7 +197,7 @@ If you are planning to import the entire planet or you are running into memory e
 docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v openstreetmap-nodes:/nodes \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     -e "OSM2PGSQL_EXTRA_ARGS=--flat-nodes /nodes/flat_nodes.bin" \
     overv/openstreetmap-tile-server \
     import
@@ -222,7 +222,7 @@ To raise it use `--shm-size` parameter. For example:
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v openstreetmap-data:/var/lib/postgresql/14/main \
     --shm-size="192m" \
     -d overv/openstreetmap-tile-server \
     run

@@ -11,8 +11,8 @@ before_script:
 script:
 - docker build --pull --cache-from overv/openstreetmap-tile-server --tag overv/openstreetmap-tile-server .
 - docker volume create openstreetmap-data
-- docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main overv/openstreetmap-tile-server import
-- docker run --rm -v openstreetmap-data:/var/lib/postgresql/12/main -p 8080:80 -d overv/openstreetmap-tile-server run
+- docker run --rm -v openstreetmap-data:/var/lib/postgresql/14/main overv/openstreetmap-tile-server import
+- docker run --rm -v openstreetmap-data:/var/lib/postgresql/14/main -p 8080:80 -d overv/openstreetmap-tile-server run
 - sleep 30
 - make DOCKER_IMAGE=overv/openstreetmap-tile-server stop
 after_script:
