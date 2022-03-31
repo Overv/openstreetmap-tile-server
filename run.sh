@@ -20,10 +20,27 @@ if [ "$#" -ne 1 ]; then
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
     echo "    UPDATES: consecutive updates (enabled/disabled)"
+    echo "    NAME_LUA: name of .lua script to run as part of the style"
+    echo "    NAME_STYLE: name of the .style to use"
+    echo "    NAME_MML: name of the .mml file to render to mapnik.xml"
+    echo "    NAME_SQL: name of the .sql file to use"
     exit 1
 fi
 
 set -x
+
+if [ ! "$(ls -A /home/renderer/src/openstreetmap-carto)" ]; then
+
+    mv /home/renderer/src/openstreetmap-carto-backup/* /home/renderer/src/openstreetmap-carto/
+
+fi
+
+if [ ! -f /home/renderer/src/openstreetmap-carto/mapnik.xml ]; then
+
+    cd /home/renderer/src/openstreetmap-carto
+    carto ${NAME_MML:-project.mml} > mapnik.xml
+
+fi
 
 if [ "$1" = "import" ]; then
     # Ensure that database directory is in right state
@@ -75,13 +92,14 @@ if [ "$1" = "import" ]; then
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/openstreetmap-carto.lua --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/openstreetmap-carto.style /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/${NAME_LUA:-openstreetmap-carto.lua} --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/${NAME_STYLE:-openstreetmap-carto.style} /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
 
     # Create indexes
-    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/indexes.sql
+    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/${NAME_SQL:-indexes.sql}
 
     #Import external data
     sudo chown -R renderer: /home/renderer/src
+
     sudo -E -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data
 
     # Register that data has changed for mod_tile caching purposes

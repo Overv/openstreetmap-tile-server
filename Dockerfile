@@ -80,14 +80,10 @@ RUN cd ~ \
 ###########################################################################################################
 
 FROM compiler-common AS compiler-stylesheet
-RUN apt-get install -y --no-install-recommends \
- npm
 RUN cd ~ \
 && git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
 && cd openstreetmap-carto \
-&& sed -ie 's#https:\/\/naciscdn.org\/naturalearth\/110m\/cultural\/ne_110m_admin_0_boundary_lines_land.zip#https:\/\/naturalearth.s3.amazonaws.com\/110m_cultural\/ne_110m_admin_0_boundary_lines_land.zip#g' external-data.yml \
-&& npm install -g carto@1.2.0 \
-&& carto project.mml > mapnik.xml
+&& rm -rf .git
 
 ###########################################################################################################
 
@@ -96,7 +92,6 @@ RUN mkdir -p /home/renderer/src \
 && cd /home/renderer/src \
 && git clone https://github.com/zverik/regional \
 && cd regional \
-&& git checkout 889d630a1e1a1bacabdd1dad6e17b49e7d58cd4b \
 && rm -rf .git \
 && chmod u+x /home/renderer/src/regional/trim_osc.py
 
@@ -124,6 +119,7 @@ RUN apt-get update \
  liblua5.3-dev \
  lua5.3 \
  mapnik-utils \
+ npm \
  osmium-tool \
  osmosis \
  python-is-python3 \
@@ -148,7 +144,11 @@ RUN adduser --disabled-password --gecos "" renderer
 # Install python libraries
 RUN pip3 install \
  requests \
+ osmium \
  pyyaml
+ 
+# Install carto for stylesheet
+RUN npm install -g carto@0.18.2
 
 # Configure Apache
 RUN mkdir /var/lib/mod_tile \
@@ -206,15 +206,16 @@ RUN dpkg -i renderd_1-1_amd64.deb \
 # Install mod_tile
 COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
 RUN dpkg -i mod-tile_1-1_amd64.deb \
+ && mkdir -p /home/renderer/src/openstreetmap-carto \
  && ldconfig \
  && rm mod-tile_1-1_amd64.deb
-COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
-# Install stylesheet
-COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto
+COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
+
+COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
 
 # Start running
 COPY run.sh /

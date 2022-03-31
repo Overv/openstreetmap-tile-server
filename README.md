@@ -36,6 +36,7 @@ docker run \
     -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
     -v /absolute/path/to/luxembourg.poly:/data.poly \
     -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
     overv/openstreetmap-tile-server \
     import
 ```
@@ -54,6 +55,32 @@ docker run \
     overv/openstreetmap-tile-server \
     import
 ```
+
+### Using an alternate style
+
+By default the container will use openstreetmap-carto if it is not specified. However, you can modify the style at run-time. Be aware you need the style mounted at `run` AND `import` as the Lua script needs to be run:
+
+```
+docker run \
+    -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
+    -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
+    -e NAME_LUA=sample.lua
+    -e NAME_STYLE=test.style
+    -e NAME_MML=project.mml
+    -e NAME_SQL=test.sql
+    -v /home/user/openstreetmap-carto-modified:/home/renderer/src/openstreetmap-carto \
+    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    overv/openstreetmap-tile-server \
+    import
+```
+
+If you do not define the "NAME_*" variables, the script will default to those found in the openstreetmap-carto style.
+
+Be sure to mount the volume during `run` with the same `-v /home/user/openstreetmap-carto-modified:/home/renderer/src/openstreetmap-carto`
+
+If you do not see the expected style upon `run` double check your paths as the style may not have been found at the directory specified. By default, `openstreetmap-carto` will be used if a style cannot be found
+
+**Only openstreetmap-carto and styles like it, eg, ones with one lua script, one style, one mml, one SQL can be used**
 
 ## Running the server
 
