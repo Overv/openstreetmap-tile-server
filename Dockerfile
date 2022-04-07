@@ -97,7 +97,7 @@ RUN mkdir -p /home/renderer/src \
 
 ###########################################################################################################
 
-FROM ubuntu:20.04 AS final-base
+FROM ubuntu:20.04 AS final
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
@@ -164,15 +164,12 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log \
 && ln -sf /dev/stderr /var/log/apache2/error.log
 
 # Copy update scripts
-COPY openstreetmap-tiles-update-expire /usr/bin/
-RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire \
+COPY openstreetmap-tiles-update-expire.sh /usr/bin/
+RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire.sh \
 && mkdir /var/log/tiles \
 && chmod a+rw /var/log/tiles \
 && ln -s /home/renderer/src/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag \
-&& echo "* * * * *   renderer    openstreetmap-tiles-update-expire\n" >> /etc/crontab
-
-RUN mkdir /nodes \
-&& chown renderer:renderer /nodes
+&& echo "* * * * *   renderer    openstreetmap-tiles-update-expire.sh\n" >> /etc/crontab
 
 # Configure PosgtreSQL
 COPY postgresql.custom.conf.tmpl /etc/postgresql/14/main/
@@ -181,9 +178,18 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 && echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf \
 && echo "host all all ::/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
-###########################################################################################################
-
-FROM final-base AS final
+# Create volume directories
+RUN   mkdir  -p  /data/database/  \
+  &&  mkdir  -p  /data/style/  \
+  &&  mkdir  -p  /home/renderer/src/  \
+  &&  chown  -R  renderer:  /data/  \
+  &&  chown  -R  renderer:  /home/renderer/src/  \
+  &&  mv  /var/lib/postgresql/14/main/  /data/database/postgres/  \
+  &&  mv  /var/lib/mod_tile/            /data/tiles/     \
+  &&  ln  -s  /data/database/postgres  /var/lib/postgresql/14/main             \
+  &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
+  &&  ln  -s  /data/tiles              /var/lib/mod_tile                       \
+;
 
 # Install PostGIS
 COPY --from=compiler-postgis postgis_src/postgis-src_3.2.1-1_amd64.deb .
@@ -206,7 +212,6 @@ RUN dpkg -i renderd_1-1_amd64.deb \
 # Install mod_tile
 COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
 RUN dpkg -i mod-tile_1-1_amd64.deb \
- && mkdir -p /home/renderer/src/openstreetmap-carto \
  && ldconfig \
  && rm mod-tile_1-1_amd64.deb
 

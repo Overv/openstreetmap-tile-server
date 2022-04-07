@@ -15,7 +15,7 @@ function setPostgresPassword() {
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
-    echo "    import: Set up the database and import /data.osm.pbf"
+    echo "    import: Set up the database and import /data/region.osm.pbf"
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
@@ -29,24 +29,22 @@ fi
 
 set -x
 
-if [ ! "$(ls -A /home/renderer/src/openstreetmap-carto)" ]; then
-
-    mv /home/renderer/src/openstreetmap-carto-backup/* /home/renderer/src/openstreetmap-carto/
-
+# if there is no custom style mounted, then use osm-carto
+if [ ! "$(ls -A /data/style/)" ]; then
+    mv /home/renderer/src/openstreetmap-carto-backup/* /data/style/
 fi
 
-if [ ! -f /home/renderer/src/openstreetmap-carto/mapnik.xml ]; then
-
-    cd /home/renderer/src/openstreetmap-carto
+# carto build
+if [ ! -f /data/style/mapnik.xml ]; then
+    cd /data/style/
     carto ${NAME_MML:-project.mml} > mapnik.xml
-
 fi
 
-if [ "$1" = "import" ]; then
+if [ "$1" == "import" ]; then
     # Ensure that database directory is in right state
-    chown postgres:postgres -R /var/lib/postgresql
-    if [ ! -f /var/lib/postgresql/14/main/PG_VERSION ]; then
-        sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /var/lib/postgresql/14/main/ initdb -o "--locale C.UTF-8"
+    chown -R postgres: /var/lib/postgresql /data/database/postgres/
+    if [ ! -f /data/database/postgres/PG_VERSION ]; then
+        sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /data/database/postgres/ initdb -o "--locale C.UTF-8"
     fi
 
     # Initialize PostgreSQL
@@ -61,61 +59,100 @@ if [ "$1" = "import" ]; then
     setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data.osm.pbf, so importing Luxembourg as example..."
+    if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
+        echo "WARNING: No import file at /data/region.osm.pbf, so importing Luxembourg as example..."
         DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
         DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
     fi
 
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data.osm.pbf
+        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data/region.osm.pbf
         if [ -n "$DOWNLOAD_POLY" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data.poly
+            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
         fi
     fi
 
-    if [ "${UPDATES:-}" = "enabled" ]; then
+    if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
-        osmium fileinfo /data.osm.pbf > /var/lib/mod_tile/data.osm.pbf.info
-        osmium fileinfo /data.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44 > /var/lib/mod_tile/replication_timestamp.txt
-        REPLICATION_TIMESTAMP=$(cat /var/lib/mod_tile/replication_timestamp.txt)
+        REPLICATION_TIMESTAMP=`osmium fileinfo /data/region.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44`
 
         # initial setup of osmosis workspace (for consecutive updates)
-        sudo -u renderer openstreetmap-tiles-update-expire $REPLICATION_TIMESTAMP
+        sudo -u renderer openstreetmap-tiles-update-expire.sh $REPLICATION_TIMESTAMP
     fi
 
     # copy polygon file if available
-    if [ -f /data.poly ]; then
-        sudo -u renderer cp /data.poly /var/lib/mod_tile/data.poly
+    if [ -f /data/region.poly ]; then
+        cp /data/region.poly /data/database/region.poly
+        chown renderer: /data/database/region.poly
+    fi
+
+    # flat-nodes
+    if [ "${FLAT_NODES:-}" == "enabled" ] || [ "${FLAT_NODES:-}" == "1" ]; then
+        OSM2PGSQL_EXTRA_ARGS="${OSM2PGSQL_EXTRA_ARGS:-} --flat-nodes /data/database/flat_nodes.bin"
     fi
 
     # Import data
-    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore --tag-transform-script /home/renderer/src/openstreetmap-carto/${NAME_LUA:-openstreetmap-carto.lua} --number-processes ${THREADS:-4} -S /home/renderer/src/openstreetmap-carto/${NAME_STYLE:-openstreetmap-carto.style} /data.osm.pbf ${OSM2PGSQL_EXTRA_ARGS:-}
+    sudo -u renderer osm2pgsql -d gis --create --slim -G --hstore  \
+      --tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
+      --number-processes ${THREADS:-4}  \
+      -S /data/style/${NAME_STYLE:-openstreetmap-carto.style}  \
+      /data/region.osm.pbf  \
+      ${OSM2PGSQL_EXTRA_ARGS:-}  \
+    ;
+
+    # old flat-nodes dir
+    if [ -f /nodes/flat_nodes.bin ] && ! [ -f /data/database/flat_nodes.bin ]; then
+        mv /nodes/flat_nodes.bin /data/database/flat_nodes.bin
+        chown renderer: /data/database/flat_nodes.bin
+    fi
 
     # Create indexes
-    sudo -u postgres psql -d gis -f /home/renderer/src/openstreetmap-carto/${NAME_SQL:-indexes.sql}
+    if [ -f /data/style/${NAME_SQL:-indexes.sql} ]; then
+        sudo -u postgres psql -d gis -f /data/style/${NAME_SQL:-indexes.sql}
+    fi
 
     #Import external data
-    sudo chown -R renderer: /home/renderer/src
-
-    sudo -E -u renderer python3 /home/renderer/src/openstreetmap-carto/scripts/get-external-data.py -c /home/renderer/src/openstreetmap-carto/external-data.yml -D /home/renderer/src/openstreetmap-carto/data
+    chown -R renderer: /home/renderer/src/ /data/style/
+    if [ -f /data/style/scripts/get-external-data.py ] && [ -f /data/style/external-data.yml ]; then
+        sudo -E -u renderer python3 /data/style/scripts/get-external-data.py -c /data/style/external-data.yml -D /data/style/data
+    fi
 
     # Register that data has changed for mod_tile caching purposes
-    touch /var/lib/mod_tile/planet-import-complete
+    sudo -u renderer touch /data/database/planet-import-complete
 
     service postgresql stop
 
     exit 0
 fi
 
-if [ "$1" = "run" ]; then
+if [ "$1" == "run" ]; then
     # Clean /tmp
     rm -rf /tmp/*
 
+    # migrate old files
+    if [ -f /data/database/PG_VERSION ] && ! [ -d /data/database/postgres/ ]; then
+        mkdir /data/database/postgres/
+        mv /data/database/* /data/database/postgres/
+    fi
+    if [ -f /nodes/flat_nodes.bin ] && ! [ -f /data/database/flat_nodes.bin ]; then
+        mv /nodes/flat_nodes.bin /data/database/flat_nodes.bin
+    fi
+    if [ -f /data/tiles/data.poly ] && ! [ -f /data/database/region.poly ]; then
+        mv /data/tiles/data.poly /data/database/region.poly
+    fi
+
+    # sync planet-import-complete file
+    if [ -f /data/tiles/planet-import-complete ] && ! [ -f /data/database/planet-import-complete ]; then
+        cp /data/tiles/planet-import-complete /data/database/planet-import-complete
+    fi
+    if ! [ -f /data/tiles/planet-import-complete ] && [ -f /data/database/planet-import-complete ]; then
+        cp /data/database/planet-import-complete /data/tiles/planet-import-complete
+    fi
+
     # Fix postgres data privileges
-    chown postgres:postgres /var/lib/postgresql -R
+    chown -R postgres: /var/lib/postgresql/ /data/database/postgres/
 
     # Configure Apache CORS
     if [ "${ALLOW_CORS:-}" == "enabled" ] || [ "${ALLOW_CORS:-}" == "1" ]; then
@@ -132,8 +169,8 @@ if [ "$1" = "run" ]; then
     sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
 
     # start cron job to trigger consecutive updates
-    if [ "${UPDATES:-}" = "enabled" ] || [ "${UPDATES:-}" = "1" ]; then
-      /etc/init.d/cron start
+    if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
+        /etc/init.d/cron start
     fi
 
     # Run while handling docker stop's SIGTERM

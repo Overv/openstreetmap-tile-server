@@ -9,10 +9,10 @@ push: build
 	docker push ${DOCKER_IMAGE}:latest
 
 test: build
-	docker volume create openstreetmap-data
-	docker run --rm -v openstreetmap-data:/var/lib/postgresql/14/main ${DOCKER_IMAGE} import
-	docker run --rm -v openstreetmap-data:/var/lib/postgresql/14/main -p 8080:80 -d ${DOCKER_IMAGE} run
+	docker volume create osm-data
+	docker run --rm -v osm-data:/data/database/ ${DOCKER_IMAGE} import
+	docker run --rm -v osm-data:/data/database/ -p 8080:80 -d ${DOCKER_IMAGE} run
 
 stop:
 	docker rm -f `docker ps | grep '${DOCKER_IMAGE}' | awk '{ print $$1 }'` || true
-	docker volume rm -f openstreetmap-data
+	docker volume rm -f osm-data
