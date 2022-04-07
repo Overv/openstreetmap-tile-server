@@ -3,7 +3,7 @@ name: Build and test image
 on:
   push:
     branches:
-    - 'master'
+    - master
     tags:
     - 'v*'
   pull_request:
@@ -51,11 +51,11 @@ jobs:
       name: Import Luxembourg
       run : |
         docker  volume  create  ${VOLUME}
-        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  ${IMAGE}:${TAG}  import
+        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  ${IMAGE}:${TAG}  import
     -
       name: Start server
       run : |
-        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
+        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
         sleep 30
     -
       name: Download tiles
@@ -104,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
     - test
-    if: github.event_name != 'pull_request'
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
     -
       name: Checkout
