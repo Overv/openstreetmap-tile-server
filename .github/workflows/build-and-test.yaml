@@ -68,18 +68,31 @@ jobs:
         curl  http://localhost/tile/18/138474/85459.png  --fail  -o empty.png
         curl  http://localhost/tile/18/135536/89345.png  --fail  -o example.png
     -
+      name: Upload tiles
+      uses: actions/upload-artifact@v3
+      with:
+        name: tiles
+        path: '*.png'
+    -
       name: Verify tiles
       run : |
         sha1sum  *.png
         sha1sum  --check  <<EOF
-        8aeddc612a8a4fbc480dbd3241739ccf19938f11 *000.png
-        194ae70330d54bc0ab95441e0c46774232e3c4a4 *100.png
-        7d78800b607ad769cf0280744f04dfd92e31ffd1 *101.png
-        62ae1081b8613b542fb650136ff15ffac9c7818d *110.png
-        3f72d900803266ce8e7fe27d25eb251f29cba3d0 *111.png
         c226ca747874fb1307eef853feaf9d8db28cef2b *empty.png
         EOF
-        ! diff  empty.png  example.png  ||  (  >&2  echo  "ERROR: example.png is empty"  &&  exit 1  )
+        tiles=(`ls *.png`)
+        for ((i=0; i<${#tiles[@]}; i++)) ; do
+          if [ `file  --brief  --mime-type  "${tiles[$i]}"` != 'image/png' ] ; then
+            >&2  echo  "ERROR: ${tiles[$i]} is not a image/png file"
+            exit 1
+          fi
+          for ((j=i+1; j<${#tiles[@]}; j++)) ; do
+            if ( diff  "${tiles[$i]}"  "${tiles[$j]}" ) ; then
+              >&2  echo  "ERROR: ${tiles[$i]} is identical to ${tiles[$j]}"
+              exit 2
+            fi
+          done
+        done
     -
       name: Cleanup
       run : |
