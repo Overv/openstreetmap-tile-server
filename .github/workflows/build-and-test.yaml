@@ -10,6 +10,11 @@ on:
     branches:
     - master
 
+# cancel outdated jobs for the same reference
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   IMAGE : ${{ github.repository_owner }}/openstreetmap-tile-server
   TAG   : ${{ github.sha }}
