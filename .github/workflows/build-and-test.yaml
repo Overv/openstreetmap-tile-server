@@ -1,0 +1,161 @@
+name: Build and test image
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - 'v*'
+  pull_request:
+    branches:
+    - master
+
+env:
+  IMAGE : ${{ github.repository_owner }}/openstreetmap-tile-server
+  TAG   : ${{ github.sha }}
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      VOLUME    : osm-db
+      CONTAINER : osm-www
+      MOUNT     : /data/database/
+    steps:
+    -
+      name: Checkout
+      uses: actions/checkout@v3
+    -
+      name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    -
+      name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    -
+      name: Environment
+      run : |
+        echo  IMAGE=$(echo ${{ env.IMAGE }} | tr '[:upper:]' '[:lower:]')  >>$GITHUB_ENV
+    -
+      name: Docker build
+      uses: docker/build-push-action@v2
+      with:
+        pull       : true
+        load       : true
+        context    : .
+        file       : ./Dockerfile
+        tags       : ${{env.IMAGE}}:${{env.TAG}}
+        cache-from : type=gha,scope=${{ github.workflow }}
+        cache-to   : type=gha,scope=${{ github.workflow }},mode=max
+    -
+      name: Import Luxembourg
+      run : |
+        docker  volume  create  ${VOLUME}
+        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  ${IMAGE}:${TAG}  import
+    -
+      name: Start server
+      run : |
+        docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
+        sleep 30
+    -
+      name: Download tiles
+      run : |
+        curl  http://localhost/tile/0/0/0.png            --fail  -o 000.png
+        curl  http://localhost/tile/1/0/0.png            --fail  -o 100.png
+        curl  http://localhost/tile/1/0/1.png            --fail  -o 101.png
+        curl  http://localhost/tile/1/1/0.png            --fail  -o 110.png
+        curl  http://localhost/tile/1/1/1.png            --fail  -o 111.png
+        curl  http://localhost/tile/18/138474/85459.png  --fail  -o empty.png
+        curl  http://localhost/tile/18/135536/89345.png  --fail  -o example.png
+    -
+      name: Upload tiles
+      uses: actions/upload-artifact@v3
+      with:
+        name: tiles
+        path: '*.png'
+    -
+      name: Verify tiles
+      run : |
+        sha1sum  *.png
+        sha1sum  --check  <<EOF
+        c226ca747874fb1307eef853feaf9d8db28cef2b *empty.png
+        EOF
+        tiles=(`ls *.png`)
+        for ((i=0; i<${#tiles[@]}; i++)) ; do
+          if [ `file  --brief  --mime-type  "${tiles[$i]}"` != 'image/png' ] ; then
+            >&2  echo  "ERROR: ${tiles[$i]} is not a image/png file"
+            exit 1
+          fi
+          for ((j=i+1; j<${#tiles[@]}; j++)) ; do
+            if ( diff  "${tiles[$i]}"  "${tiles[$j]}" ) ; then
+              >&2  echo  "ERROR: ${tiles[$i]} is identical to ${tiles[$j]}"
+              exit 2
+            fi
+          done
+        done
+    -
+      name: Cleanup
+      run : |
+        docker  rm  --force  --volumes  ${CONTAINER}
+        docker  volume  rm  --force  ${VOLUME}
+        docker  rmi  --force  ${IMAGE}:${TAG}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+    - test
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+    -
+      name: Checkout
+      uses: actions/checkout@v3
+    -
+      name: Environment
+      run : |
+        echo  IMAGE=$(echo ${{ env.IMAGE }} | tr '[:upper:]' '[:lower:]')  >>$GITHUB_ENV
+        echo  DOCKERHUB_IMAGE=$([ "${{ secrets.DOCKERHUB_USERNAME }}" != '' ] && [ "${{ secrets.DOCKERHUB_PASSWORD }}" != "" ] && echo "$IMAGE")  >>$GITHUB_ENV
+    -
+      name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: |
+          ${{ env.DOCKERHUB_IMAGE }}
+          ghcr.io/${{ env.IMAGE }}
+        tags: |
+          type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+    -
+      name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    -
+      name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    -
+      name: Login to DockerHub
+      uses: docker/login-action@v1
+      if: ${{ env.DOCKERHUB_IMAGE != '' }}
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    -
+      name: Login to GHCR
+      uses: docker/login-action@v1
+      with:
+        registry : ghcr.io
+        username : ${{ github.repository_owner }}
+        password : ${{ secrets.GITHUB_TOKEN }}
+    -
+      name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        pull       : true
+        push       : true
+        context    : .
+        file       : ./Dockerfile
+        tags       : ${{ steps.meta.outputs.tags }}
+        labels     : ${{ steps.meta.outputs.labels }}
+        cache-from : type=gha,scope=${{ github.workflow }}
+        cache-to   : type=gha,scope=${{ github.workflow }},mode=max
