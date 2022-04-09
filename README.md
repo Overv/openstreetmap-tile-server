@@ -9,40 +9,42 @@ This container allows you to easily set up an OpenStreetMap PNG tile server give
 
 First create a Docker volume to hold the PostgreSQL database that will contain the OpenStreetMap data:
 
-    docker volume create openstreetmap-data
+    docker volume create osm-data
 
-Next, download an .osm.pbf extract from geofabrik.de for the region that you're interested in. You can then start importing it into PostgreSQL by running a container and mounting the file as `/data.osm.pbf`. For example:
+Next, download an `.osm.pbf` extract from geofabrik.de for the region that you're interested in. You can then start importing it into PostgreSQL by running a container and mounting the file as `/data/region.osm.pbf`. For example:
 
 ```
 docker run \
-    -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v /absolute/path/to/luxembourg.osm.pbf:/data/region.osm.pbf \
+    -v osm-data:/data/database/ \
     overv/openstreetmap-tile-server \
     import
 ```
 
 If the container exits without errors, then your data has been successfully imported and you are now ready to run the tile server.
 
-Note that the import process requires an internet connection. The run process does not require an internet connection. If you want to run the openstreetmap-tile server on a computer that is isolated, you must first import on an internet connected computer, export the openstreetmap-data volume as a tarfile, and then restore the data volume on the target computer system.
+Note that the import process requires an internet connection. The run process does not require an internet connection. If you want to run the openstreetmap-tile server on a computer that is isolated, you must first import on an internet connected computer, export the `osm-data` volume as a tarfile, and then restore the data volume on the target computer system.
 
-Also when running on an isolated system, the default index.html from the container will not work, as it requires access to the web for the leaflet packages. 
+Also when running on an isolated system, the default `index.html` from the container will not work, as it requires access to the web for the leaflet packages.
 
 ### Automatic updates (optional)
 
-If your import is an extract of the planet and has polygonal bounds associated with it, like those from geofabrik.de, then it is possible to set your server up for automatic updates. Make sure to reference both the OSM file and the polygon file during the import process to facilitate this, and also include the `UPDATES=enabled` variable:
+If your import is an extract of the planet and has polygonal bounds associated with it, like those from [geofabrik.de](https://download.geofabrik.de/), then it is possible to set your server up for automatic updates. Make sure to reference both the OSM file and the polygon file during the `import` process to facilitate this, and also include the `UPDATES=enabled` variable:
 
 ```
 docker run \
     -e UPDATES=enabled \
-    -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
-    -v /absolute/path/to/luxembourg.poly:/data.poly \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
-    -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
+    -v /absolute/path/to/luxembourg.osm.pbf:/data/region.osm.pbf \
+    -v /absolute/path/to/luxembourg.poly:/data/region.poly \
+    -v osm-data:/data/database/ \
     overv/openstreetmap-tile-server \
     import
 ```
 
 Refer to the section *Automatic updating and tile expiry* to actually enable the updates while running the tile server.
+
+Please note: If you're not importing the whole planet, then the `.poly` file is necessary to limit automatic updates to the relevant region.
+Therefore, when you only have a `.osm.pbf` file but not a `.poly` file, you should not enable automatic updates.
 
 ### Letting the container download the file
 
@@ -52,7 +54,7 @@ It is also possible to let the container download files for you rather than moun
 docker run \
     -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
     -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     overv/openstreetmap-tile-server \
     import
 ```
@@ -69,15 +71,15 @@ docker run \
     -e NAME_STYLE=test.style
     -e NAME_MML=project.mml
     -e NAME_SQL=test.sql
-    -v /home/user/openstreetmap-carto-modified:/home/renderer/src/openstreetmap-carto \
-    -v openstreetmap-data:/var/lib/postgresql/12/main \
+    -v /home/user/openstreetmap-carto-modified:/data/style/ \
+    -v osm-data:/data/database/ \
     overv/openstreetmap-tile-server \
     import
 ```
 
 If you do not define the "NAME_*" variables, the script will default to those found in the openstreetmap-carto style.
 
-Be sure to mount the volume during `run` with the same `-v /home/user/openstreetmap-carto-modified:/home/renderer/src/openstreetmap-carto`
+Be sure to mount the volume during `run` with the same `-v /home/user/openstreetmap-carto-modified:/data/style/`
 
 If you do not see the expected style upon `run` double check your paths as the style may not have been found at the directory specified. By default, `openstreetmap-carto` will be used if a style cannot be found
 
@@ -90,7 +92,7 @@ Run the server like this:
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -103,19 +105,19 @@ The `docker-compose.yml` file included with this repository shows how the aforem
 
 ### Preserving rendered tiles
 
-Tiles that have already been rendered will be stored in `/var/lib/mod_tile`. To make sure that this data survives container restarts, you should create another volume for it:
+Tiles that have already been rendered will be stored in `/data/tiles/`. To make sure that this data survives container restarts, you should create another volume for it:
 
 ```
-docker volume create openstreetmap-rendered-tiles
+docker volume create osm-tiles
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
-    -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
+    -v osm-data:/data/database/ \
+    -v osm-tiles:/data/tiles/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
 
-**If you do this, then make sure to also run the import with the `openstreetmap-rendered-tiles` volume to make sure that caching works properly across updates!**
+**If you do this, then make sure to also run the import with the `osm-tiles` volume to make sure that caching works properly across updates!**
 
 ### Enabling automatic updating (optional)
 
@@ -125,8 +127,8 @@ Given that you've set up your import as described in the *Automatic updates* sec
 docker run \
     -p 8080:80 \
     -e UPDATES=enabled \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
-    -v openstreetmap-rendered-tiles:/var/lib/mod_tile \
+    -v osm-data:/data/database/ \
+    -v osm-tiles:/data/tiles/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -140,7 +142,7 @@ To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles 
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -e ALLOW_CORS=enabled \
     -d overv/openstreetmap-tile-server \
     run
@@ -154,7 +156,7 @@ To connect to the PostgreSQL database inside the container, make sure to expose 
 docker run \
     -p 8080:80 \
     -p 5432:5432 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -172,7 +174,7 @@ docker run \
     -p 8080:80 \
     -p 5432:5432 \
     -e PGPASSWORD=secret \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -188,7 +190,7 @@ The import and tile serving processes use 4 threads by default, but this number 
 docker run \
     -p 8080:80 \
     -e THREADS=24 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -200,7 +202,7 @@ The import and tile serving processes use 800 MB RAM cache by default, but this 
 docker run \
     -p 8080:80 \
     -e "OSM2PGSQL_EXTRA_ARGS=-C 4096" \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
@@ -212,26 +214,23 @@ The database use the autovacuum feature by default. This behavior can be changed
 docker run \
     -p 8080:80 \
     -e AUTOVACUUM=off \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
     run
 ```
 
-### Flat nodes
+### FLAT_NODES
 
 If you are planning to import the entire planet or you are running into memory errors then you may want to enable the `--flat-nodes` option for osm2pgsql. You can then use it during the import process as follows:
 
 ```
 docker run \
-    -v /absolute/path/to/luxembourg.osm.pbf:/data.osm.pbf \
-    -v openstreetmap-nodes:/nodes \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
-    -e "OSM2PGSQL_EXTRA_ARGS=--flat-nodes /nodes/flat_nodes.bin" \
+    -v /absolute/path/to/luxembourg.osm.pbf:/data/region.osm.pbf \
+    -v osm-data:/data/database/ \
+    -e "FLAT_NODES=enabled" \
     overv/openstreetmap-tile-server \
     import
 ```
-
->Note that if you use a folder other than `/nodes` then you must make sure that you manually set the owner to `renderer`!
 
 ### Benchmarks
 
@@ -250,7 +249,7 @@ To raise it use `--shm-size` parameter. For example:
 ```
 docker run \
     -p 8080:80 \
-    -v openstreetmap-data:/var/lib/postgresql/14/main \
+    -v osm-data:/data/database/ \
     --shm-size="192m" \
     -d overv/openstreetmap-tile-server \
     run
