@@ -7,6 +7,7 @@ services:
 before_install:
 - echo "Before install"
 before_script:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 - docker pull overv/openstreetmap-tile-server || true
 script:
 - docker build --pull --cache-from overv/openstreetmap-tile-server --tag overv/openstreetmap-tile-server .
@@ -21,8 +22,13 @@ after_success:
 - if [[ "$TRAVIS_BRANCH" == "master" ]];
   then
   docker images ;
-  echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin ;
   docker push overv/openstreetmap-tile-server ;
-  fi
+  fi;
+  TAG=$(git describe --exact-match --tags 2> /dev/null) ;
+  if [ -n "$TAG" ];
+  then
+  docker tag overv/openstreetmap-tile-server "overv/openstreetmap-tile-server:$TAG" ;
+  docker push "overv/openstreetmap-tile-server:$TAG" ;
+  fi;
 notifications:
   email: true
