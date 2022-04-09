@@ -23,12 +23,6 @@ after_success:
   then
   docker images ;
   docker push overv/openstreetmap-tile-server ;
-  fi;
-  TAG=$(git describe --exact-match --tags 2> /dev/null) ;
-  if [ -n "$TAG" ];
-  then
-  docker tag overv/openstreetmap-tile-server "overv/openstreetmap-tile-server:$TAG" ;
-  docker push "overv/openstreetmap-tile-server:$TAG" ;
-  fi;
+  fi
 notifications:
   email: true
