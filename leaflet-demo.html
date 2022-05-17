@@ -23,7 +23,7 @@
         <div id="map"></div>
 
         <script>
-            // permalink support: https://github.com/MarcChasse/leaflet.Permalink
+            // permalink support: based on https://github.com/MarcChasse/leaflet.Permalink
             L.Permalink = {
                 //gets the map center, zoom-level and rotation from the URL if present, else uses default values
                 getMapLocation: function (zoom, center) {
@@ -31,15 +31,14 @@
                     zoom = (zoom || zoom === 0) ? zoom : 18;
                     center = (center) ? center : [52.26869, -113.81034];
 
-                    if (window.location.hash !== '') {
-                        var hash = window.location.hash.replace('#', '');
-                        var parts = hash.split(',');
-                        if (parts.length === 3) {
+                    if (window.location.hash.startsWith('#map=')) {
+                        var parts = window.location.hash.substring(5).split('/');
+                        if (parts.length >= 3) {
+                            zoom = parseInt(parts[0]);
                             center = {
-                                lat: parseFloat(parts[0]),
-                                lng: parseFloat(parts[1])
+                                lat: parseFloat(parts[1]),
+                                lng: parseFloat(parts[2])
                             };
-                            zoom = parseInt(parts[2].slice(0, -1), 10);
                         }
                     }
                     return {zoom: zoom, center: center};
@@ -56,10 +55,10 @@
                         }
 
                         var center = map.getCenter();
-                        var hash = '#' +
-                                Math.round(center.lat * 100000) / 100000 + ',' +
-                                Math.round(center.lng * 100000) / 100000 + ',' +
-                                map.getZoom() + 'z';
+                        var hash = '#map=' +
+                                map.getZoom() + '/' +
+                                Math.round(center.lat * 100000) / 100000 + '/' +
+                                Math.round(center.lng * 100000) / 100000
                         var state = {
                             zoom: map.getZoom(),
                             center: center
