@@ -277,3 +277,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+The address-bar permalink in `leaflet-demo.html` is based on
+[leaflet.Permalink](https://github.com/MarcChasse/leaflet.Permalink)
+by Marc Chasse, which is licensed under the MIT License.
