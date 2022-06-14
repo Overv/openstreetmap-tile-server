@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /container.env
+
 function createPostgresConfig() {
   cp /etc/postgresql/14/main/postgresql.custom.conf.tmpl /etc/postgresql/14/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/14/main/conf.d/postgresql.custom.conf

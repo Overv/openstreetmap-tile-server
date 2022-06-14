@@ -61,6 +61,10 @@ EXPIRY_TOUCHFROM=13
 EXPIRY_DELETEFROM=19
 EXPIRY_MAXZOOM=20
 
+
+REPLICATION_URL=${REPLICATION_URL:="https://planet.openstreetmap.org/replication/hour/"}
+MAX_INTERVAL_SECONDS=${MAX_INTERVAL_SECONDS:="3600"}
+
 #*************************************************************************
 #*************************************************************************
 
@@ -109,14 +113,16 @@ freelock()
 if [ $# -eq 1 ] ; then
     m_info "Initialising Osmosis replication system to $1"
     mkdir -p $WORKOSM_DIR
+    $OSMOSIS_BIN -v 5 --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
 
-    $OSMOSIS_BIN --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
+    init_seq=$(pyosmium-get-changes --server $REPLICATION_URL -D $1)
+    url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
+    wget $REPLICATION_URL/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
 
-    wget "https://replicate-sequences.osm.mazdermind.de/?"$1"T00:00:00Z" -O $WORKOSM_DIR/state.txt
-
-    mv $WORKOSM_DIR/configuration.txt $WORKOSM_DIR/configuration_orig.txt
-    sed "s!baseUrl=http://planet.openstreetmap.org/replication/minute!baseUrl=https://planet.openstreetmap.org/replication/minute!" $WORKOSM_DIR/configuration_orig.txt > $WORKOSM_DIR/configuration.txt
-    exit 0
+    cat > $WORKOSM_DIR/configuration.txt <<- EOM
+baseUrl=$REPLICATION_URL
+maxInterval=$MAX_INTERVAL_SECONDS
+EOM
 fi
 
 # make sure the lockfile is removed when we exit and then claim it

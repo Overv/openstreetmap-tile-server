@@ -126,6 +126,8 @@ Given that you've set up your import as described in the *Automatic updates* sec
 ```
 docker run \
     -p 8080:80 \
+    -e REPLICATION_URL=https://planet.openstreetmap.org/replication/minute/ \
+    -e MAX_INTERVAL_SECONDS=60 \
     -e UPDATES=enabled \
     -v osm-data:/data/database/ \
     -v osm-tiles:/data/tiles/ \

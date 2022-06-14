@@ -146,7 +146,7 @@ RUN pip3 install \
  requests \
  osmium \
  pyyaml
- 
+
 # Install carto for stylesheet
 RUN npm install -g carto@0.18.2
 
