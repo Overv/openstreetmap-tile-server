@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+PBF_FILE=${PBF_FILE:="/data/region.osm.pbf"}
+POLY_FILE=${POLY_FILE:="/data/region.poly"}
+
 function createPostgresConfig() {
   cp /etc/postgresql/14/main/postgresql.custom.conf.tmpl /etc/postgresql/14/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/14/main/conf.d/postgresql.custom.conf
@@ -15,11 +18,13 @@ function setPostgresPassword() {
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
-    echo "    import: Set up the database and import /data/region.osm.pbf"
+    echo "    import: Set up the database and import $PBF_FILE"
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
     echo "    UPDATES: consecutive updates (enabled/disabled)"
+    echo "    PBF_FILE: path to .osm.pbf file to import (/data/region.osm.pbf if not provided)"
+    echo "    POLY_FILE: path to .poly file (/data/region.poly if not provided) (optional)"
     echo "    NAME_LUA: name of .lua script to run as part of the style"
     echo "    NAME_STYLE: name of the .style to use"
     echo "    NAME_MML: name of the .mml file to render to mapnik.xml"
@@ -61,32 +66,32 @@ if [ "$1" == "import" ]; then
     setPostgresPassword
 
     # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data/region.osm.pbf, so importing Luxembourg as example..."
+    if [ ! -f $PBF_FILE ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
+        echo "WARNING: No import file at $PBF_FILE, so importing Luxembourg as example..."
         DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
         DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
     fi
 
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data/region.osm.pbf
+        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O $PBF_FILE
         if [ -n "$DOWNLOAD_POLY" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
+            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O $POLY_FILE
         fi
     fi
 
     if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
-        REPLICATION_TIMESTAMP=`osmium fileinfo /data/region.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44`
+        REPLICATION_TIMESTAMP=`osmium fileinfo $PBF_FILE | grep 'osmosis_replication_timestamp=' | cut -b35-44`
 
         # initial setup of osmosis workspace (for consecutive updates)
         sudo -u renderer openstreetmap-tiles-update-expire.sh $REPLICATION_TIMESTAMP
     fi
 
     # copy polygon file if available
-    if [ -f /data/region.poly ]; then
-        cp /data/region.poly /data/database/region.poly
+    if [ -f $POLY_FILE ]; then
+        cp $POLY_FILE /data/database/region.poly
         chown renderer: /data/database/region.poly
     fi
 
@@ -100,7 +105,7 @@ if [ "$1" == "import" ]; then
       --tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
       --number-processes ${THREADS:-4}  \
       -S /data/style/${NAME_STYLE:-openstreetmap-carto.style}  \
-      /data/region.osm.pbf  \
+      $PBF_FILE  \
       ${OSM2PGSQL_EXTRA_ARGS:-}  \
     ;
 
