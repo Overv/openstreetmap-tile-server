@@ -120,6 +120,7 @@ RUN apt-get update \
  npm \
  osmium-tool \
  osmosis \
+ postgresql-14 \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -129,10 +130,6 @@ RUN apt-get update \
  sudo \
  ttf-unifont \
  wget \
-&& echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-&& apt-get update \
-&& apt-get install -y --no-install-recommends postgresql-14 \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
