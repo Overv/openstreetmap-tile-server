@@ -95,7 +95,7 @@ RUN mkdir -p /home/renderer/src \
 
 ###########################################################################################################
 
-FROM ubuntu:20.04 AS final
+FROM ubuntu:22.04 AS final
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
