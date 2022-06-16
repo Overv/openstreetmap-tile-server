@@ -131,7 +131,7 @@ RUN   mkdir  -p  /data/database/  \
 
 # Configure renderd
 RUN sed -i 's,tile_dir=.*,tile_dir=/var/lib/mod_tile/,g' /etc/renderd.conf \
-  echo $'[ajt] \n\
+&& echo '[ajt] \n\
 URI=/tile/ \n\
 TILEDIR=/var/lib/mod_tile \n\
 XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
