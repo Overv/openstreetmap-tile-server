@@ -115,7 +115,7 @@ if [ $# -eq 1 ] ; then
     mkdir -p $WORKOSM_DIR
     $OSMOSIS_BIN -v 5 --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
 
-    init_seq=$(/usr/lib/python3-pyosmium/pyosmium-get-changes/pyosmium-get-changes --server $REPLICATION_URL -D $1)
+    init_seq=$(/usr/lib/python3-pyosmium/pyosmium-get-changes --server $REPLICATION_URL -D $1)
     url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
     wget $REPLICATION_URL/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
 
