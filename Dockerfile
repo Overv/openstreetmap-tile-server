@@ -67,7 +67,7 @@ RUN apt-get install -y --no-install-recommends \
  libtool \
  libmapnik-dev
 RUN cd ~ \
-&& git clone -b switch2osm --single-branch https://github.com/SomeoneElseOSM/mod_tile.git --depth 1 \
+&& git clone --single-branch https://github.com/openstreetmap/mod_tile.git --depth 1 \
 && cd mod_tile \
 && ./autogen.sh \
 && ./configure \
