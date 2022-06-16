@@ -130,9 +130,14 @@ RUN   mkdir  -p  /data/database/  \
 ;
 
 # Configure renderd
-RUN sed -i 's/renderaccount/renderer/g' /etc/renderd.conf \
-&& sed -i 's/\/truetype//g' /etc/renderd.conf \
-&& sed -i 's/hot/tile/g' /etc/renderd.conf
+RUN sed -i 's,tile_dir=.*,tile_dir=/var/lib/mod_tile/,g' /etc/renderd.conf \
+  echo $'[ajt] \n\
+URI=/tile/ \n\
+TILEDIR=/var/lib/mod_tile \n\
+XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
+HOST=localhost \n\
+TILESIZE=256 \n\
+MAXZOOM=20' >> /etc/renderd.conf
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
