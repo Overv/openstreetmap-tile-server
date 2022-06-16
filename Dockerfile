@@ -112,6 +112,7 @@ RUN apt-get update \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \
+ font-unifont \
  gnupg2 \
  gdal-bin \
  liblua5.3-dev \
@@ -128,7 +129,6 @@ RUN apt-get update \
  python3-shapely \
  python3-pip \
  sudo \
- ttf-unifont \
  wget \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
