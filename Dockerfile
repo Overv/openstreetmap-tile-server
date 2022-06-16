@@ -15,49 +15,6 @@ RUN apt-get update \
 
 ###########################################################################################################
 
-FROM compiler-common AS compiler-postgis
-RUN apt-get update \
-&& apt-get install -y --no-install-recommends \
- postgresql-server-dev-14 \
- libxml2-dev \
- libgeos-dev \
- libproj-dev \
-&& wget https://download.osgeo.org/postgis/source/postgis-3.2.1.tar.gz -O postgis.tar.gz \
-&& mkdir -p postgis_src \
-&& tar -xvzf postgis.tar.gz --strip 1 -C postgis_src \
-&& rm postgis.tar.gz \
-&& cd postgis_src \
-&& ./configure --without-protobuf --without-raster \
-&& make -j $(nproc) \
-&& checkinstall --pkgversion="3.2.1" --install=no --default make install
-
-###########################################################################################################
-
-FROM compiler-common AS compiler-osm2pgsql
-RUN apt-get install -y --no-install-recommends \
- cmake \
- libboost-dev \
- libboost-system-dev \
- libboost-filesystem-dev \
- libexpat1-dev \
- zlib1g-dev \
- libbz2-dev \
- libpq-dev \
- libproj-dev \
- lua5.3 \
- liblua5.3-dev \
- pandoc
-RUN cd ~ \
-&& git clone -b master --single-branch https://github.com/openstreetmap/osm2pgsql.git --depth 1 \
-&& cd osm2pgsql \
-&& mkdir build \
-&& cd build \
-&& cmake .. \
-&& make -j $(nproc) \
-&& checkinstall --pkgversion="1" --install=no --default make install
-
-###########################################################################################################
-
 FROM compiler-common AS compiler-stylesheet
 RUN cd ~ \
 && git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
@@ -100,9 +57,13 @@ RUN apt-get update \
  lua5.3 \
  mapnik-utils \
  npm \
+ osm2pgsql \
  osmium-tool \
  osmosis \
  postgresql-14 \
+ postgresql-14-postgis-3 \
+ postgresql-14-postgis-3-scripts \
+ postgis \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -167,16 +128,6 @@ RUN   mkdir  -p  /data/database/  \
   &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
   &&  ln  -s  /data/tiles              /var/lib/mod_tile                       \
 ;
-
-# Install PostGIS
-COPY --from=compiler-postgis postgis_src/postgis-src_3.2.1-1_amd64.deb .
-RUN dpkg -i postgis-src_3.2.1-1_amd64.deb \
-&& rm postgis-src_3.2.1-1_amd64.deb
-
-# Install osm2pgsql
-COPY --from=compiler-osm2pgsql /root/osm2pgsql/build/build_1-1_amd64.deb .
-RUN dpkg -i build_1-1_amd64.deb \
-&& rm build_1-1_amd64.deb
 
 # Configure renderd
 RUN sed -i 's/renderaccount/renderer/g' /etc/renderd.conf \
