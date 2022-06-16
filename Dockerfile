@@ -179,9 +179,9 @@ RUN dpkg -i build_1-1_amd64.deb \
 && rm build_1-1_amd64.deb
 
 # Configure renderd
-RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
-&& sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
-&& sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
+RUN sed -i 's/renderaccount/renderer/g' /etc/renderd.conf \
+&& sed -i 's/\/truetype//g' /etc/renderd.conf \
+&& sed -i 's/hot/tile/g' /etc/renderd.conf
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
