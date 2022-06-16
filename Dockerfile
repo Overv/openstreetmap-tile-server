@@ -58,25 +58,6 @@ RUN cd ~ \
 
 ###########################################################################################################
 
-FROM compiler-common AS compiler-modtile-renderd
-RUN apt-get install -y --no-install-recommends \
- apache2-dev \
- automake \
- autoconf \
- autotools-dev \
- libtool \
- libmapnik-dev
-RUN cd ~ \
-&& git clone --single-branch https://github.com/openstreetmap/mod_tile.git --depth 1 \
-&& cd mod_tile \
-&& ./autogen.sh \
-&& ./configure \
-&& make -j $(nproc) \
-&& checkinstall --pkgversion="1" --install=no --pkgname "renderd" --default make install \
-&& checkinstall --pkgversion="1" --install=no --pkgname "mod_tile" --default make install-mod_tile
-
-###########################################################################################################
-
 FROM compiler-common AS compiler-stylesheet
 RUN cd ~ \
 && git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
@@ -128,6 +109,7 @@ RUN apt-get update \
  python3-psycopg2 \
  python3-shapely \
  python3-pip \
+ renderd \
  sudo \
  wget \
 && apt-get clean autoclean \
@@ -196,21 +178,10 @@ COPY --from=compiler-osm2pgsql /root/osm2pgsql/build/build_1-1_amd64.deb .
 RUN dpkg -i build_1-1_amd64.deb \
 && rm build_1-1_amd64.deb
 
-# Install renderd
-COPY --from=compiler-modtile-renderd /root/mod_tile/renderd_1-1_amd64.deb .
-RUN dpkg -i renderd_1-1_amd64.deb \
-&& rm renderd_1-1_amd64.deb \
-&& sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
+# Configure renderd
+RUN sed -i 's/renderaccount/renderer/g' /usr/local/etc/renderd.conf \
 && sed -i 's/\/truetype//g' /usr/local/etc/renderd.conf \
 && sed -i 's/hot/tile/g' /usr/local/etc/renderd.conf
-
-# Install mod_tile
-COPY --from=compiler-modtile-renderd /root/mod_tile/mod-tile_1-1_amd64.deb .
-RUN dpkg -i mod-tile_1-1_amd64.deb \
- && ldconfig \
- && rm mod-tile_1-1_amd64.deb
-
-COPY --from=compiler-modtile-renderd /root/mod_tile/osmosis-db_replag /usr/bin/osmosis-db_replag
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
