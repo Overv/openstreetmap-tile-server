@@ -112,7 +112,7 @@ RUN apt-get update \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \
- font-unifont \
+ fonts-unifont \
  gnupg2 \
  gdal-bin \
  liblua5.3-dev \
