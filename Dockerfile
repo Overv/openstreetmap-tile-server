@@ -4,12 +4,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
  git-core \
- checkinstall \
- g++ \
- gnupg2 \
- make \
- tar \
- wget \
  ca-certificates \
 && apt-get update
 
