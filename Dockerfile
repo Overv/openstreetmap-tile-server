@@ -89,11 +89,7 @@ RUN pip3 install \
 RUN npm install -g carto@0.18.2
 
 # Configure Apache
-RUN mkdir /var/lib/mod_tile \
-&& chown renderer /var/lib/mod_tile \
-&& mkdir /var/run/renderd \
-&& chown renderer /var/run/renderd \
-&& echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
+RUN echo "LoadModule tile_module /usr/lib/apache2/modules/mod_tile.so" >> /etc/apache2/conf-available/mod_tile.conf \
 && echo "LoadModule headers_module /usr/lib/apache2/modules/mod_headers.so" >> /etc/apache2/conf-available/mod_headers.conf \
 && a2enconf mod_tile && a2enconf mod_headers
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
@@ -117,23 +113,24 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 && echo "host all all ::/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
 
 # Create volume directories
-RUN   mkdir  -p  /data/database/  \
+RUN mkdir -p /run/renderd/ \
+  &&  mkdir  -p  /data/database/  \
   &&  mkdir  -p  /data/style/  \
   &&  mkdir  -p  /home/renderer/src/  \
   &&  chown  -R  renderer:  /data/  \
   &&  chown  -R  renderer:  /home/renderer/src/  \
+  &&  chown  -R  renderer:  /run/renderd  \
   &&  mv  /var/lib/postgresql/14/main/  /data/database/postgres/  \
-  &&  mv  /var/lib/mod_tile/            /data/tiles/     \
+  &&  mv  /var/cache/renderd/tiles/            /data/tiles/     \
+  &&  chown  -R  renderer: /data/tiles \
   &&  ln  -s  /data/database/postgres  /var/lib/postgresql/14/main             \
   &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
-  &&  ln  -s  /data/tiles              /var/lib/mod_tile                       \
+  &&  ln  -s  /data/tiles              /var/cache/renderd/tiles                \
 ;
 
-# Configure renderd
-RUN sed -i 's,tile_dir=.*,tile_dir=/var/lib/mod_tile/,g' /etc/renderd.conf \
-&& echo '[ajt] \n\
+RUN echo '[default] \n\
 URI=/tile/ \n\
-TILEDIR=/var/lib/mod_tile \n\
+TILEDIR=/var/cache/renderd/tiles \n\
 XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
 HOST=localhost \n\
 TILESIZE=256 \n\
