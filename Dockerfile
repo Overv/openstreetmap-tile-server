@@ -41,6 +41,7 @@ RUN apt-get update \
 && apt-get install -y --no-install-recommends \
  apache2 \
  cron \
+ dateutils \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \

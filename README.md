@@ -246,7 +246,7 @@ You can find an example of the import performance to expect with this image on t
 
 If you encounter such entries in the log, it will mean that the default shared memory limit (64 MB) is too low for the container and it should be raised:
 ```
-renderd[121]: ERROR: failed to render TILE ajt 2 0-3 0-3
+renderd[121]: ERROR: failed to render TILE default 2 0-3 0-3
 renderd[121]: reason: Postgis Plugin: ERROR: could not resize shared memory segment "/PostgreSQL.790133961" to 12615680 bytes: ### No space left on device
 ```
 To raise it use `--shm-size` parameter. For example:
