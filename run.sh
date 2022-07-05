@@ -70,7 +70,7 @@ if [ "$1" == "import" ]; then
     if [ -n "${DOWNLOAD_PBF:-}" ]; then
         echo "INFO: Download PBF file: $DOWNLOAD_PBF"
         wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data/region.osm.pbf
-        if [ -n "$DOWNLOAD_POLY" ]; then
+        if [ -n "${DOWNLOAD_POLY:-}" ]; then
             echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
             wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
         fi
@@ -78,7 +78,7 @@ if [ "$1" == "import" ]; then
 
     if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
-        REPLICATION_TIMESTAMP=`osmium fileinfo /data/region.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -b35-44`
+        REPLICATION_TIMESTAMP=`osmium fileinfo /data/region.osm.pbf | grep 'osmosis_replication_timestamp=' | cut -d "=" -f 2`
 
         # initial setup of osmosis workspace (for consecutive updates)
         sudo -u renderer openstreetmap-tiles-update-expire.sh $REPLICATION_TIMESTAMP
@@ -168,11 +168,16 @@ if [ "$1" == "run" ]; then
     setPostgresPassword
 
     # Configure renderd threads
-    sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /usr/local/etc/renderd.conf
+    sed -i -E "s/num_threads=[0-9]+/num_threads=${THREADS:-4}/g" /etc/renderd.conf
 
     # start cron job to trigger consecutive updates
     if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         /etc/init.d/cron start
+        sudo -u renderer touch /var/log/tiles/run.log; tail -f /var/log/tiles/run.log >> /proc/1/fd/1 &
+        sudo -u renderer touch /var/log/tiles/osmosis.log; tail -f /var/log/tiles/osmosis.log >> /proc/1/fd/1 &
+        sudo -u renderer touch /var/log/tiles/expiry.log; tail -f /var/log/tiles/expiry.log >> /proc/1/fd/1 &
+        sudo -u renderer touch /var/log/tiles/osm2pgsql.log; tail -f /var/log/tiles/osm2pgsql.log >> /proc/1/fd/1 &
+
     fi
 
     # Run while handling docker stop's SIGTERM
@@ -181,7 +186,7 @@ if [ "$1" == "run" ]; then
     }
     trap stop_handler SIGTERM
 
-    sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf &
+    sudo -u renderer renderd -f -c /etc/renderd.conf &
     child=$!
     wait "$child"
 

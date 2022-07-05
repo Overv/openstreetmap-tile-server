@@ -3,7 +3,7 @@
 set -e
 
 #------------------------------------------------------------------------------
-# AJT - change directory to mod_tile directory so that we can run replag
+# Change directory to mod_tile directory so that we can run replag
 # and other things directly from this script when run from cron.
 # Change the actual location to wherever installed locally.
 #------------------------------------------------------------------------------
@@ -61,6 +61,10 @@ EXPIRY_TOUCHFROM=13
 EXPIRY_DELETEFROM=19
 EXPIRY_MAXZOOM=20
 
+
+REPLICATION_URL=${REPLICATION_URL:="https://planet.openstreetmap.org/replication/hour/"}
+MAX_INTERVAL_SECONDS=${MAX_INTERVAL_SECONDS:="3600"}
+
 #*************************************************************************
 #*************************************************************************
 
@@ -109,14 +113,16 @@ freelock()
 if [ $# -eq 1 ] ; then
     m_info "Initialising Osmosis replication system to $1"
     mkdir -p $WORKOSM_DIR
+    $OSMOSIS_BIN -v 5 --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
 
-    $OSMOSIS_BIN --read-replication-interval-init workingDirectory=$WORKOSM_DIR 1>&2 2> "$OSMOSISLOG"
+    init_seq=$(/usr/lib/python3-pyosmium/pyosmium-get-changes --server $REPLICATION_URL -D $1)
+    url_dynamicPart=$(printf %09d $init_seq | sed 's_\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)\([0-9][0-9][0-9]\)_\1/\2/\3_')
+    wget $REPLICATION_URL/$url_dynamicPart.state.txt -O $WORKOSM_DIR/state.txt
 
-    wget "https://replicate-sequences.osm.mazdermind.de/?"$1"T00:00:00Z" -O $WORKOSM_DIR/state.txt
-
-    mv $WORKOSM_DIR/configuration.txt $WORKOSM_DIR/configuration_orig.txt
-    sed "s!baseUrl=http://planet.openstreetmap.org/replication/minute!baseUrl=https://planet.openstreetmap.org/replication/minute!" $WORKOSM_DIR/configuration_orig.txt > $WORKOSM_DIR/configuration.txt
-    exit 0
+    cat > $WORKOSM_DIR/configuration.txt <<- EOM
+baseUrl=$REPLICATION_URL
+maxInterval=$MAX_INTERVAL_SECONDS
+EOM
 fi
 
 # make sure the lockfile is removed when we exit and then claim it
@@ -141,8 +147,9 @@ if `python -c "import os, sys; st=os.statvfs('$BASE_DIR'); sys.exit(1 if st.f_ba
 fi
 
 seq=`cat $WORKOSM_DIR/state.txt | grep sequenceNumber | cut -d= -f2`
+replag=`dateutils.ddiff $(cat $WORKOSM_DIR/state.txt | grep timestamp | cut -d "=" -f 2 | sed 's,\\\,,g') now`
 
-m_ok "start import from seq-nr $seq, replag is `osmosis-db_replag -h`"
+m_ok "start import from seq-nr $seq, replag is $replag"
 
 /bin/cp $WORKOSM_DIR/state.txt $WORKOSM_DIR/last.state.txt
 m_ok "downloading diff"
@@ -182,15 +189,13 @@ fi
 m_ok "expiring tiles"
 
 #------------------------------------------------------------------------------
-# When expiring tiles we need to define the style sheet if it's not "default".
-# In this case it's "ajt".
 # Previously all tiles on the "dirty" list between $EXPIRY_MINZOOM and
 # $EXPIRY_MAXZOOM were dirtied.  We currently re-render
 # tiles >= $EXPIRY_MINZOOM and < $EXPIRY_DELETEFROM, expiry from 14 and
 # delete >= $EXPIRY_DELETEFROM and <= $EXPIRY_MAXZOOM.
 # The default path to renderd.sock is fixed.
 #------------------------------------------------------------------------------
-if ! render_expired --map=ajt --min-zoom=$EXPIRY_MINZOOM --touch-from=$EXPIRY_TOUCHFROM --delete-from=$EXPIRY_DELETEFROM --max-zoom=$EXPIRY_MAXZOOM -s /var/run/renderd/renderd.sock < "$EXPIRY_FILE.$$" 2>&1 | tail -8 >> "$EXPIRYLOG"; then
+if ! render_expired --map=default --min-zoom=$EXPIRY_MINZOOM --touch-from=$EXPIRY_TOUCHFROM --delete-from=$EXPIRY_DELETEFROM --max-zoom=$EXPIRY_MAXZOOM -s /var/run/renderd/renderd.sock < "$EXPIRY_FILE.$$" 2>&1 | tail -8 >> "$EXPIRYLOG"; then
     m_info "Expiry failed"
 fi
 
