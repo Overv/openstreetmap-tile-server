@@ -21,50 +21,65 @@ env:
 
 jobs:
 
-  test:
+  build:
+    strategy:
+      matrix:
+        include:
+        - arch    : amd64
+          mode    : build-and-test
+        - arch    : arm64
+          variant : v8
+          mode    : build-only
     runs-on: ubuntu-latest
     env:
       VOLUME    : osm-db
       CONTAINER : osm-www
       MOUNT     : /data/database/
+      PLATFORM  : linux/${{ matrix.arch }}${{ (matrix.variant != '' && format('/{0}', matrix.variant)) || '' }}
     steps:
     -
       name: Checkout
       uses: actions/checkout@v3
     -
       name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: ${{ matrix.arch }}
     -
       name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
     -
       name: Environment
       run : |
         echo  IMAGE=$(echo ${{ env.IMAGE }} | tr '[:upper:]' '[:lower:]')  >>$GITHUB_ENV
     -
       name: Docker build
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         pull       : true
-        load       : true
+        load       : ${{ matrix.mode == 'build-and-test' }}
+        platforms  : ${{ env.PLATFORM }}
         context    : .
         file       : ./Dockerfile
-        tags       : ${{env.IMAGE}}:${{env.TAG}}
-        cache-from : type=gha,scope=${{ github.workflow }}
-        cache-to   : type=gha,scope=${{ github.workflow }},mode=max
+        tags       : ${{ env.IMAGE }}:${{ env.TAG }}
+        cache-from : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }}
+        cache-to   : type=gha,scope=${{ github.workflow }}:${{ env.PLATFORM }},mode=max
     -
       name: Import Luxembourg
+      if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         docker  volume  create  ${VOLUME}
         docker  run  --rm  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  ${IMAGE}:${TAG}  import
     -
       name: Start server
+      if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         docker  run  --shm-size=128M  -v ${VOLUME}:${MOUNT}  -e UPDATES=enabled  -p 80:80  -d  --name ${CONTAINER}  ${IMAGE}:${TAG}  run
         sleep 30
         docker  logs  ${CONTAINER}
     -
       name: Download tiles
+      if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         curl  http://localhost/tile/0/0/0.png            --fail  -o 000.png
         curl  http://localhost/tile/1/0/0.png            --fail  -o 100.png
@@ -75,12 +90,14 @@ jobs:
         curl  http://localhost/tile/18/135536/89345.png  --fail  -o example.png
     -
       name: Upload tiles
+      if  : ${{ matrix.mode == 'build-and-test' }}
       uses: actions/upload-artifact@v3
       with:
         name: tiles
         path: '*.png'
     -
       name: Verify tiles
+      if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         sha1sum  *.png
         sha1sum  --check  <<EOF
@@ -101,6 +118,7 @@ jobs:
         done
     -
       name: Cleanup
+      if  : ${{ matrix.mode == 'build-and-test' }}
       run : |
         docker  rm  --force  --volumes  ${CONTAINER}
         docker  volume  rm  --force  ${VOLUME}
@@ -109,7 +127,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs:
-    - test
+    - build
     if: ${{ github.event_name != 'pull_request' }}
     steps:
     -
@@ -123,7 +141,7 @@ jobs:
     -
       name: Docker meta
       id: meta
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v4
       with:
         images: |
           ${{ env.DOCKERHUB_IMAGE }}
@@ -135,27 +153,29 @@ jobs:
           type=semver,pattern={{major}}
     -
       name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: amd64,arm64
     -
       name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
     -
       name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       if: ${{ env.DOCKERHUB_IMAGE != '' }}
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
     -
       name: Login to GHCR
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry : ghcr.io
         username : ${{ github.repository_owner }}
         password : ${{ secrets.GITHUB_TOKEN }}
     -
       name: Build and push
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         pull       : true
         push       : true
@@ -164,5 +184,6 @@ jobs:
         file       : ./Dockerfile
         tags       : ${{ steps.meta.outputs.tags }}
         labels     : ${{ steps.meta.outputs.labels }}
-        cache-from : type=gha,scope=${{ github.workflow }}
-        cache-to   : type=gha,scope=${{ github.workflow }},mode=max
+        cache-from: |
+          type=gha,scope=${{ github.workflow }}:linux/amd64
+          type=gha,scope=${{ github.workflow }}:linux/arm64/v8
