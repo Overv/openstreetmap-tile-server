@@ -34,6 +34,9 @@ FROM ubuntu:22.04 AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV AUTOVACUUM=on
 ENV UPDATES=disabled
+ENV REPLICATION_URL=https://planet.openstreetmap.org/replication/hour/
+ENV MAX_INTERVAL_SECONDS=3600
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Get packages
