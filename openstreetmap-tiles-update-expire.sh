@@ -56,10 +56,10 @@ RUNLOG=$LOG_DIR/run.log
 # Here we expire (but don't immediately rerender) tiles between zoom levels
 # 13 and 18 and delete between 19 and 20.
 #------------------------------------------------------------------------------
-EXPIRY_MINZOOM=13
-EXPIRY_TOUCHFROM=13
-EXPIRY_DELETEFROM=19
-EXPIRY_MAXZOOM=20
+EXPIRY_MINZOOM=${EXPIRY_MINZOOM:="13}
+EXPIRY_TOUCHFROM=${EXPIRY_TOUCHFROM:="13"}
+EXPIRY_DELETEFROM=${EXPIRY_DELETEFROM:="19"}
+EXPIRY_MAXZOOM=${EXPIRY_MAXZOOM:="20"}
 
 
 REPLICATION_URL=${REPLICATION_URL:="https://planet.openstreetmap.org/replication/hour/"}
