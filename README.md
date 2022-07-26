@@ -137,6 +137,29 @@ docker run \
 
 This will enable a background process that automatically downloads changes from the OpenStreetMap server, filters them for the relevant region polygon you specified, updates the database and finally marks the affected tiles for rerendering.
 
+### Tile expiration (optional)
+
+Specify custom tile expiration settings to control which zoom level tiles are marked as expired when an update is performed. Tiles can be marked as expired in the cache (TOUCHFROM), but will still be served
+until a new tile has been rendered, or deleted from the cache (DELETEFROM), so nothing will be served until a new tile has been rendered.
+
+The example tile expiration values below are the default values.
+
+```
+docker run \
+    -p 8080:80 \
+    -e REPLICATION_URL=https://planet.openstreetmap.org/replication/minute/ \
+    -e MAX_INTERVAL_SECONDS=60 \
+    -e UPDATES=enabled \
+    -e EXPIRY_MINZOOM=13 \
+    -e EXPIRY_TOUCHFROM=13 \
+    -e EXPIRY_DELETEFROM=19 \
+    -e EXPIRY_MAXZOOM=20 \
+    -v osm-data:/data/database/ \
+    -v osm-tiles:/data/tiles/ \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+
 ### Cross-origin resource sharing
 
 To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles from other domains, simply set the `ALLOW_CORS` variable to `enabled`:
