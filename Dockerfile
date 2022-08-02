@@ -13,6 +13,10 @@ FROM compiler-common AS compiler-stylesheet
 RUN cd ~ \
 && git clone --single-branch --branch v5.4.0 https://github.com/gravitystorm/openstreetmap-carto.git --depth 1 \
 && cd openstreetmap-carto \
+&& sed -i 's/, "unifont Medium", "Unifont Upper Medium"//g' style/fonts.mss \
+&& sed -i 's/"Noto Sans Tibetan Regular",//g' style/fonts.mss \
+&& sed -i 's/"Noto Sans Tibetan Bold",//g' style/fonts.mss \
+&& sed -i 's/Noto Sans Syriac Eastern Regular/Noto Sans Syriac Regular/g' style/fonts.mss \
 && rm -rf .git
 
 ###########################################################################################################
@@ -45,6 +49,7 @@ RUN apt-get update \
  apache2 \
  cron \
  dateutils \
+ fonts-hanazono \
  fonts-noto-cjk \
  fonts-noto-hinted \
  fonts-noto-unhinted \
@@ -76,6 +81,12 @@ RUN apt-get update \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 RUN adduser --disabled-password --gecos "" renderer
+
+# Get Noto Emoji Regular font, despite it being deprecated by Google
+RUN wget https://github.com/googlefonts/noto-emoji/blob/9a5261d871451f9b5183c93483cbd68ed916b1e9/fonts/NotoEmoji-Regular.ttf?raw=true --content-disposition -P /usr/share/fonts/
+
+# For some reason this one is missing in the default packages
+RUN wget https://github.com/stamen/terrain-classic/blob/master/fonts/unifont-Medium.ttf?raw=true --content-disposition -P /usr/share/fonts/
 
 # Install python libraries
 RUN pip3 install \
@@ -132,7 +143,8 @@ TILEDIR=/var/cache/renderd/tiles \n\
 XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
 HOST=localhost \n\
 TILESIZE=256 \n\
-MAXZOOM=20' >> /etc/renderd.conf
+MAXZOOM=20' >> /etc/renderd.conf \
+ && sed -i 's,/usr/share/fonts/truetype,/usr/share/fonts,g' /etc/renderd.conf
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
