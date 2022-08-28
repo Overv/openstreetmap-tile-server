@@ -106,6 +106,9 @@ COPY leaflet-demo.html /var/www/html/index.html
 RUN ln -sf /dev/stdout /var/log/apache2/access.log \
 && ln -sf /dev/stderr /var/log/apache2/error.log
 
+# Icon
+RUN wget -O /var/www/html/favicon.ico https://www.openstreetmap.org/favicon.ico
+
 # Copy update scripts
 COPY openstreetmap-tiles-update-expire.sh /usr/bin/
 RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire.sh \
