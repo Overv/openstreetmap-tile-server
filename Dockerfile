@@ -112,6 +112,9 @@ RUN cd /var/www/html/ \
 && unzip leaflet.zip \
 && rm leaflet.zip
 
+# Icon
+RUN wget -O /var/www/html/favicon.ico https://www.openstreetmap.org/favicon.ico
+
 # Copy update scripts
 COPY openstreetmap-tiles-update-expire.sh /usr/bin/
 RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire.sh \
