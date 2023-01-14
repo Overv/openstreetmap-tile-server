@@ -1,11 +1,17 @@
 FROM ubuntu:22.04 AS compiler-common
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
- git-core \
- ca-certificates \
-&& apt-get update
+ ca-certificates gnupg lsb-release locales \
+ wget curl \
+ git-core unzip unrar \
+&& locale-gen $LANG && update-locale LANG=$LANG \
+&& sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+&& wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+&& apt-get update && apt-get -y upgrade
 
 ###########################################################################################################
 
@@ -31,7 +37,7 @@ RUN mkdir -p /home/renderer/src \
 
 ###########################################################################################################
 
-FROM ubuntu:22.04 AS final
+FROM compiler-common AS final
 
 # Based on
 # https://switch2osm.org/serving-tiles/manually-building-a-tile-server-18-04-lts/
@@ -40,6 +46,7 @@ ENV AUTOVACUUM=on
 ENV UPDATES=disabled
 ENV REPLICATION_URL=https://planet.openstreetmap.org/replication/hour/
 ENV MAX_INTERVAL_SECONDS=3600
+ENV PG_VERSION 15
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -63,9 +70,9 @@ RUN apt-get update \
  osm2pgsql \
  osmium-tool \
  osmosis \
- postgresql-14 \
- postgresql-14-postgis-3 \
- postgresql-14-postgis-3-scripts \
+ postgresql-$PG_VERSION \
+ postgresql-$PG_VERSION-postgis-3 \
+ postgresql-$PG_VERSION-postgis-3-scripts \
  postgis \
  python-is-python3 \
  python3-mapnik \
@@ -75,7 +82,7 @@ RUN apt-get update \
  python3-pip \
  renderd \
  sudo \
- wget \
+ vim \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
@@ -124,11 +131,11 @@ RUN chmod +x /usr/bin/openstreetmap-tiles-update-expire.sh \
 && echo "* * * * *   renderer    openstreetmap-tiles-update-expire.sh\n" >> /etc/crontab
 
 # Configure PosgtreSQL
-COPY postgresql.custom.conf.tmpl /etc/postgresql/14/main/
+COPY postgresql.custom.conf.tmpl /etc/postgresql/$PG_VERSION/main/
 RUN chown -R postgres:postgres /var/lib/postgresql \
-&& chown postgres:postgres /etc/postgresql/14/main/postgresql.custom.conf.tmpl \
-&& echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/14/main/pg_hba.conf \
-&& echo "host all all ::/0 md5" >> /etc/postgresql/14/main/pg_hba.conf
+&& chown postgres:postgres /etc/postgresql/$PG_VERSION/main/postgresql.custom.conf.tmpl \
+&& echo "host all all 0.0.0.0/0 scram-sha-256" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf \
+&& echo "host all all ::/0 scram-sha-256" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf
 
 # Create volume directories
 RUN mkdir -p /run/renderd/ \
@@ -138,10 +145,10 @@ RUN mkdir -p /run/renderd/ \
   &&  chown  -R  renderer:  /data/  \
   &&  chown  -R  renderer:  /home/renderer/src/  \
   &&  chown  -R  renderer:  /run/renderd  \
-  &&  mv  /var/lib/postgresql/14/main/  /data/database/postgres/  \
+  &&  mv  /var/lib/postgresql/$PG_VERSION/main/  /data/database/postgres/  \
   &&  mv  /var/cache/renderd/tiles/            /data/tiles/     \
   &&  chown  -R  renderer: /data/tiles \
-  &&  ln  -s  /data/database/postgres  /var/lib/postgresql/14/main             \
+  &&  ln  -s  /data/database/postgres  /var/lib/postgresql/$PG_VERSION/main             \
   &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
   &&  ln  -s  /data/tiles              /var/cache/renderd/tiles                \
 ;
