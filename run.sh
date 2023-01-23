@@ -41,7 +41,7 @@ if [ ! -f /data/style/mapnik.xml ]; then
 fi
 
 if [ "$1" == "import" ]; then
-    if [ ! -f /var/lib/postgresql/14/main/.databaseImported ]; then 
+    if [ -f /var/lib/postgresql/14/main/.databaseImported ]; then 
       echo "database already initialized"
       exit 0
     fi
