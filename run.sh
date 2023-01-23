@@ -40,7 +40,12 @@ if [ ! -f /data/style/mapnik.xml ]; then
     carto ${NAME_MML:-project.mml} > mapnik.xml
 fi
 
-if [ "$1" == "import" ] && [ ! -f /var/lib/postgresql/14/main/.databaseImported ]; then
+if [ "$1" == "import" ]; then
+    if [ ! -f /var/lib/postgresql/14/main/.databaseImported ]; then 
+      echo "database already initialized"
+      exit 0
+    fi
+    
     # Ensure that database directory is in right state
     mkdir -p /data/database/postgres/
     chown renderer: /data/database/
