@@ -40,7 +40,7 @@ if [ ! -f /data/style/mapnik.xml ]; then
     carto ${NAME_MML:-project.mml} > mapnik.xml
 fi
 
-if [ "$1" == "import" ]; then
+if [ "$1" == "import" ] && [ ! -f /var/lib/postgresql/14/main/.databaseImported ]; then
     # Ensure that database directory is in right state
     mkdir -p /data/database/postgres/
     chown renderer: /data/database/
@@ -125,6 +125,8 @@ if [ "$1" == "import" ]; then
     sudo -u renderer touch /data/database/planet-import-complete
 
     service postgresql stop
+
+    touch /var/lib/postgresql/14/main/.databaseImported
 
     exit 0
 fi
