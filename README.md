@@ -67,10 +67,10 @@ By default the container will use openstreetmap-carto if it is not specified. Ho
 docker run \
     -e DOWNLOAD_PBF=https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf \
     -e DOWNLOAD_POLY=https://download.geofabrik.de/europe/luxembourg.poly \
-    -e NAME_LUA=sample.lua
-    -e NAME_STYLE=test.style
-    -e NAME_MML=project.mml
-    -e NAME_SQL=test.sql
+    -e NAME_LUA=sample.lua \
+    -e NAME_STYLE=test.style \
+    -e NAME_MML=project.mml \
+    -e NAME_SQL=test.sql \
     -v /home/user/openstreetmap-carto-modified:/data/style/ \
     -v osm-data:/data/database/ \
     overv/openstreetmap-tile-server \
