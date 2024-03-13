@@ -12,22 +12,16 @@ function setPostgresPassword() {
     sudo -u postgres psql -c "ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
 }
 
-if [ "$#" -ne 1 ]; then
-    echo "usage: <import|run>"
-    echo "commands:"
-    echo "    import: Set up the database and import /data/region.osm.pbf"
-    echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
-    echo "environment variables:"
-    echo "    THREADS: defines number of threads used for importing / tile rendering"
-    echo "    UPDATES: consecutive updates (enabled/disabled)"
-    echo "    NAME_LUA: name of .lua script to run as part of the style"
-    echo "    NAME_STYLE: name of the .style to use"
-    echo "    NAME_MML: name of the .mml file to render to mapnik.xml"
-    echo "    NAME_SQL: name of the .sql file to use"
-    exit 1
-fi
-
 set -x
+
+TILESERVER_DATA_PATH=${TILESERVER_DATA_PATH:="/tileserverdata"}
+TILESERVER_STORAGE_PATH=${TILESERVER_STORAGE_PATH:="/mnt/azure"}
+TILESERVER_DATA_LABEL=${TILESERVER_DATA_LABEL:="data"}
+
+if [ "$TILESERVER_MODE" != "CREATE" ] && [ "$TILESERVER_MODE" != "RESTORE" ] && [ "$TILESERVER_MODE" != "CREATESCP" ] && [ "$TILESERVER_MODE" != "RESTORESCP" ]; then
+    # Default to CREATE
+    TILESERVER_MODE="CREATE"
+fi
 
 # if there is no custom style mounted, then use osm-carto
 if [ ! "$(ls -A /data/style/)" ]; then
@@ -40,7 +34,9 @@ if [ ! -f /data/style/mapnik.xml ]; then
     carto ${NAME_MML:-project.mml} > mapnik.xml
 fi
 
-if [ "$1" == "import" ]; then
+service apache2 stop
+
+if [ "$TILESERVER_MODE" == "CREATE" ] || [ "$TILESERVER_MODE" == "CREATESCP" ]; then
     # Ensure that database directory is in right state
     mkdir -p /data/database/postgres/
     chown renderer: /data/database/
@@ -60,9 +56,9 @@ if [ "$1" == "import" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
     setPostgresPassword
 
-    # Download Luxembourg as sample if no data is provided
+    # Download norway as sample if no data is provided
     if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data/region.osm.pbf, so importing Luxembourg as example..."
+        echo "WARNING: No import file at /data/region.osm.pbf, so importing norway as example..."
         DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
         DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
     fi
@@ -126,12 +122,41 @@ if [ "$1" == "import" ]; then
 
     service postgresql stop
 
+    mkdir $TILESERVER_DATA_PATH
+
+    tar cz /data | split -b 1024MiB - $TILESERVER_DATA_PATH/$TILESERVER_DATA_LABEL.tgz_
+
+    if [ "$TILESERVER_MODE" == "CREATESCP" ]; then
+        mkdir $TILESERVER_DATA_LABEL
+        scp -i /scpkey -r -o StrictHostKeyChecking=no $TILESERVER_DATA_LABEL $TILESERVER_STORAGE_PATH/
+        scp -i /scpkey -o StrictHostKeyChecking=no $TILESERVER_DATA_PATH/*.tgz* $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL
+    else
+        mkdir $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL
+        cp $TILESERVER_DATA_PATH/*.tgz* $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL
+    fi
+
     exit 0
 fi
 
-if [ "$1" == "run" ]; then
+if [ "$TILESERVER_MODE" == "RESTORE" ] || [ "$TILESERVER_MODE" == "RESTORESCP" ]; then
     # Clean /tmp
     rm -rf /tmp/*
+
+    mkdir -p $TILESERVER_DATA_PATH
+
+    if [ "$TILESERVER_MODE" == "RESTORESCP" ]; then
+        scp -i /scpkey -o StrictHostKeyChecking=no $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL/*.tgz* $TILESERVER_DATA_PATH
+    else
+        cp $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL/*.tgz*  $TILESERVER_DATA_PATH
+    fi
+
+    cat $TILESERVER_DATA_PATH/$TILESERVER_DATA_LABEL.tgz_* | tar xz -C /data --strip-components=1
+
+    rm -rf /data/region.osm.pbf
+
+    rm -rf $TILESERVER_DATA_PATH
+
+    chown -R renderer: /data/database/
 
     # migrate old files
     if [ -f /data/database/PG_VERSION ] && ! [ -d /data/database/postgres/ ]; then
