@@ -150,13 +150,9 @@ if [ "$TILESERVER_MODE" == "RESTORE" ] || [ "$TILESERVER_MODE" == "RESTORESCP" ]
         cp $TILESERVER_STORAGE_PATH/$TILESERVER_DATA_LABEL/*.tgz*  $TILESERVER_DATA_PATH
     fi
 
-    cat $TILESERVER_DATA_PATH/$TILESERVER_DATA_LABEL.tgz_* | tar xz -C /data --strip-components=1
-
-    rm -rf /data/region.osm.pbf
+    cat $TILESERVER_DATA_PATH/$TILESERVER_DATA_LABEL.tgz_* | tar xz -C /data/database --strip-components=2
 
     rm -rf $TILESERVER_DATA_PATH
-
-    chown -R renderer: /data/database/
 
     # migrate old files
     if [ -f /data/database/PG_VERSION ] && ! [ -d /data/database/postgres/ ]; then
